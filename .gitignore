@@ -1,3 +1,5 @@
 /Traindata
 .ipynb_checkpoints
 lib/__pycache__
+/model
+/__pycache__
