@@ -8,8 +8,14 @@ def label2mask(file_name):
     x = []
     if len(points):
         for point in points:
-            if int(point["x"]) == 1:
-                print(file_name)
+            if int(point["x"]) <= 6:
+                print("x太小了：",file_name)
+            if int(point["x"]) >= 506:
+                print("x太大了",file_name)
+            if int(point["y"]) <= 6:
+                print("y太小了：",file_name)
+            if int(point["y"]) >= 282:
+                print("y太大了",file_name)
             x.append(int(point["x"]))
             # print(point["x"])
         return min(x),max(x)

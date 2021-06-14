@@ -11,7 +11,11 @@ import torchvision.models as models
 
 from dataprocess import Medical_Data
 from network import my_unet
+from network import UNET
+from utils import check_accuracy
 
+# use this to record my loss
+import wandb
 
 # Specify the graphics card
 torch.cuda.set_device(4)
@@ -19,15 +23,17 @@ torch.cuda.set_device(4)
 # hyperparameter
 default_config = dict(
     batch_size=16,
-    num_epoch=5,
+    num_epoch=200,
     learning_rate=3e-4,          # learning rate of Adam
     weight_decay=0.01,             # weight decay 
     num_workers=5,
     warm_up_epochs=10,
-    model_path = './model/test.pt'
+    model_path = './model/heatmap_test.pt'
 )
-config = default_config
 
+wandb.init(project='Medical', entity='nekokiku', config=default_config, name='test')
+config = wandb.config
+# config = default_config
 train_path = './Traindata/'
 
 #check device
@@ -58,7 +64,7 @@ def pre_data(batch_size, num_workers):
     #         shuffle=False,
     #         num_workers=num_workers
     #     )
-    
+
     return train_loader, val_loader
 
 def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, model_path):
@@ -97,6 +103,7 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
         train_loss = sum(train_loss) / len(train_loss)
         # Print the information.
         print(f"[ Train | {epoch + 1:03d}/{num_epoch:03d} ] loss = {train_loss:.5f}")
+        # check_accuracy(train_loader, model)
 
         # ---------- Validation ----------
         model.eval()
@@ -117,12 +124,16 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
         valid_loss = sum(valid_loss) / len(valid_loss)
 
         print(f"[ Valid | {epoch + 1:03d}/{num_epoch:03d} ] loss = {valid_loss:.5f}")
+        check_accuracy(val_loader, model)
+
+        # wandb
+        wandb.log({'epoch': epoch + 1, 'train_loss': train_loss, 'val_loss': valid_loss})
 
         # if the model improves, save a checkpoint at this epoch
         if valid_loss < best_loss:
             best_loss = valid_loss
             torch.save(model, model_path)
-            print('saving model with acc {:.3f}'.format(best_loss))
+            print('saving model with best_loss {:.5f}'.format(best_loss))
 
 
 def main():
