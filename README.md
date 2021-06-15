@@ -9,13 +9,13 @@ PPV即为精确率(Precision),表示被分为正例的示例中实际为正例�
 ## Simu
 |  model         |  TPR(sensitivity)  |  PPV(Precision)    |
 |  ----          | ----  | ----    |
-| Simu-baseline  | 61.60 |  81.50  |
+| Simu-baseline  | 61.60% |  81.50%  |
 | Simu-ourUnet   |       |         |
 
 
 ## Intra
 |  model         |  TPR(sensitivity)  |  PPV(Precision)    |
 |  ----          | ----  | ----    |
-| Intra-baseline | 24.45 |  66.68  |
+| Intra-baseline | 24.45% |  66.68%  |
 | Intra-ourUnet  |       |         |
 
