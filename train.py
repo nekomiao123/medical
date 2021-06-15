@@ -20,10 +20,10 @@ from evaluation import evaluate
 import wandb
 
 # 使用多GPU保存模型的时候记得加上.module
-gpus = [4, 5]
+gpus = [2, 3]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'lr_unet'
+train_name = 'unet'
 
 # hyperparameter
 default_config = dict(
@@ -87,8 +87,8 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
     optimizer = torch.optim.AdamW(model.parameters(), lr = learning_rate, weight_decay=weight_decay)
 
     # warm_up_with_cosine_lr
-    warm_up_with_cosine_lr = lambda epoch: epoch / config['warm_up_epochs'] if epoch <= config['warm_up_epochs'] else 0.5 * ( math.cos((epoch - config['warm_up_epochs']) /(num_epoch - config['warm_up_epochs']) * math.pi) + 1)
-    scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_cosine_lr)
+    # warm_up_with_cosine_lr = lambda epoch: epoch / config['warm_up_epochs'] if epoch <= config['warm_up_epochs'] else 0.5 * ( math.cos((epoch - config['warm_up_epochs']) /(num_epoch - config['warm_up_epochs']) * math.pi) + 1)
+    # scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_cosine_lr)
 
     best_loss = float('inf')
 
@@ -157,8 +157,8 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
         # dice = check_accuracy(val_loader, model)
 
         # learning rate decay and print 
-        scheduler.step()
-        realLearningRate = scheduler.get_last_lr()[0]
+        # scheduler.step()
+        realLearningRate = 1.5e-4
         # wandb
         wandb.log({'epoch': epoch + 1, 'train_loss': train_loss, 'val_loss': valid_loss, 'precision': precision, 'f1_score': f1_score, 'sensitivity': sensitivity, 'LearningRate':realLearningRate})
 

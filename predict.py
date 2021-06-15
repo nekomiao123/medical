@@ -123,7 +123,7 @@ def main():
     batch_size = 1
     num_workers = 1
     test_path = './Traindata/'
-    model_path = './model/test2.pt'
+    model_path = './model/newheat_test.pt'
     test_dataset = Medical_Data(test_path, data_mode='simulator', set_mode='test')
     test_loader = torch.utils.data.DataLoader(
             dataset=test_dataset,
