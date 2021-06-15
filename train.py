@@ -1,5 +1,6 @@
 # This is for the progress bar.
 from tqdm import tqdm
+import math
 
 import torch
 import torch.nn as nn
@@ -22,18 +23,20 @@ import wandb
 gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
+train_name = 'lr_unet'
+
 # hyperparameter
 default_config = dict(
     batch_size=32,
     num_epoch=200,
-    learning_rate=3e-4,          # learning rate of Adam
+    learning_rate=1.5e-4,          # learning rate of Adam
     weight_decay=0.01,             # weight decay 
     num_workers=5,
     warm_up_epochs=10,
-    model_path = './model/newheat_test.pt'
+    model_path = './model/'+train_name+'.pt'
 )
 
-wandb.init(project='Medical', entity='nekokiku', config=default_config, name='newheat_test')
+wandb.init(project='Medical', entity='nekokiku', config=default_config, name=train_name)
 config = wandb.config
 # config = default_config
 train_path = './Traindata/'
@@ -83,8 +86,11 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
     # Initialize optimizer.
     optimizer = torch.optim.AdamW(model.parameters(), lr = learning_rate, weight_decay=weight_decay)
 
-    best_loss = float('inf')
+    # warm_up_with_cosine_lr
+    warm_up_with_cosine_lr = lambda epoch: epoch / config['warm_up_epochs'] if epoch <= config['warm_up_epochs'] else 0.5 * ( math.cos((epoch - config['warm_up_epochs']) /(num_epoch - config['warm_up_epochs']) * math.pi) + 1)
+    scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_cosine_lr)
 
+    best_loss = float('inf')
 
     for epoch in range(num_epoch):
         sensitivity = 0
@@ -127,7 +133,7 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
 
             with torch.no_grad():
                 logits = model(imgs)
-            
+
             loss = criterion(logits, labels)
             valid_loss.append(loss.item())
 
@@ -146,11 +152,15 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
         f1_score = (2 * precision * sensitivity) / (precision + sensitivity)
 
         valid_loss = sum(valid_loss) / len(valid_loss)
-        print(f"[ Valid | {epoch + 1:03d}/{num_epoch:03d} ] loss = {valid_loss:.5f} precision = {precision:.5f} f1_score = {f1_score:.5f} true_positive = {true_positive_all_files:03d}")
+        print(f"[ Valid | {epoch + 1:03d}/{num_epoch:03d} ] loss = {valid_loss:.5f} precision = {precision:.5f} sensitivity = {sensitivity:.5f} f1_score = {f1_score:.5f} ")
 
         # dice = check_accuracy(val_loader, model)
+
+        # learning rate decay and print 
+        scheduler.step()
+        realLearningRate = scheduler.get_last_lr()[0]
         # wandb
-        wandb.log({'epoch': epoch + 1, 'train_loss': train_loss, 'val_loss': valid_loss, 'precision': precision, 'f1_score': f1_score, 'true_positive': true_positive_all_files})
+        wandb.log({'epoch': epoch + 1, 'train_loss': train_loss, 'val_loss': valid_loss, 'precision': precision, 'f1_score': f1_score, 'sensitivity': sensitivity, 'LearningRate':realLearningRate})
 
         # if the model improves, save a checkpoint at this epoch
         if valid_loss < best_loss:
