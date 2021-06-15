@@ -2,14 +2,15 @@ import torch
 import torchvision
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import numpy as np
 
-def save_checkpoint(state, filename="my_checkpoint.pth.tar"):
-    print("=> Saving checkpoint")
-    torch.save(state, filename)
-
-def load_checkpoint(checkpoint, model):
-    print("=> Loading checkpoint")
-    model.load_state_dict(checkpoint["state_dict"])
+def im_convert(tensor, ifimg):
+    """ 展示数据"""
+    image = tensor.to("cpu").clone().detach()
+    image = image.numpy().squeeze()
+    if ifimg:
+        image = image.transpose(1,2,0)
+    return image
 
 def check_accuracy(loader, model, device="cuda"):
     num_correct = 0
@@ -32,13 +33,22 @@ def check_accuracy(loader, model, device="cuda"):
     print(
         f"Got {num_correct}/{num_pixels} with acc {num_correct/num_pixels*100:.2f}"
     )
+
     print(f"Dice score: {dice_score/len(loader)}")
+    dice = dice_score/len(loader)
     model.train()
+    return dice
 
 
-def save_predictions_as_imgs(
-    loader, model, folder="pic/", device="cuda"
-):
+def save_checkpoint(state, filename="my_checkpoint.pth.tar"):
+    print("=> Saving checkpoint")
+    torch.save(state, filename)
+
+def load_checkpoint(checkpoint, model):
+    print("=> Loading checkpoint")
+    model.load_state_dict(checkpoint["state_dict"])
+
+def save_predictions_as_imgs(loader, model, folder="pic/", device="cuda"):
     model.eval()
     for idx, (x, y) in enumerate(loader):
         x = x.to(device=device)

@@ -92,7 +92,7 @@ class Medical_Data(Dataset):
             self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
         elif data_mode == "intra":
             self.imgs_path = glob.glob(os.path.join(data_path,"aicm1[1-4]/*/images/*.png"))
-        
+
         self.data_len = len(self.imgs_path)
         self.train_len = int(self.data_len * (1 - valid_ratio))
 
@@ -138,7 +138,7 @@ class Medical_Data(Dataset):
         image = self.transform(image)
         heatmap = self.transform(heatmap)
 
-        return image,heatmap
+        return image, heatmap, label_path
 
     def __len__(self):
         return len(self.imgs_path)
@@ -151,28 +151,74 @@ def im_convert(tensor, ifimg):
         image = image.transpose(1,2,0)
     return image
 
-if __name__ == "__main__":
-    # simulator_dataset = Medical_Data("./Traindata/","simulator","test")
-    simulator_dataset = Medical_Data("./Traindata/","simulator","train")
-    # simulator_dataset = Medical_Data("./Traindata/","simulator","valid")
-    # intra_dataset = Medical_Data("./Traindata/","intra","test")
-    simulator_loader = torch.utils.data.DataLoader(dataset=simulator_dataset,
-                                               batch_size=1, 
-                                               shuffle=True)
-    dataiter = iter(simulator_loader)
-    images, labels = dataiter.next()
-    print(images.shape)
-    print(labels.shape)
-    image = im_convert(images, True)
-    label = im_convert(labels, False)
-    plt.imshow(image)
-    plt.savefig('./pic/images.png')
-    plt.show()
-    plt.imshow(label)
-    plt.savefig('./pic/heatmap.png')
-    plt.show()
+# if __name__ == "__main__":
+#     # simulator_dataset = Medical_Data("./Traindata/","simulator","test")
+#     simulator_dataset = Medical_Data("./Traindata/","simulator","train")
+#     # simulator_dataset = Medical_Data("./Traindata/","simulator","valid")
+#     # intra_dataset = Medical_Data("./Traindata/","intra","test")
+#     simulator_loader = torch.utils.data.DataLoader(dataset=simulator_dataset,
+#                                                batch_size=1, 
+#                                                shuffle=True)
+#     dataiter = iter(simulator_loader)
+#     images, labels = dataiter.next()
+#     print(images.shape)
+#     print(labels.shape)
+#     image = im_convert(images, True)
+#     label = im_convert(labels, False)
+#     plt.imshow(image)
+#     plt.savefig('./pic/images.png')
+#     plt.show()
+#     plt.imshow(label)
+#     plt.savefig('./pic/heatmap.png')
+#     plt.show()
     # print(images.shape)
     # print(labels.shape)
     # print(images)
     # print(labels)
 
+class Medical_Data_test(Dataset):
+    def __init__(self, data_path, data_mode, set_mode="test", valid_ratio=0.2):
+        '''
+        data_path: data path.
+        data_mode: simulator or intra data.
+        set_mode:  train or valid or test.
+        transform: for data augmentation
+        '''
+        self.data_path = data_path
+        self.set_mode = set_mode
+        self.transform = None
+        if data_mode == "simulator":
+            self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-9]/*/images/*.png"))
+            self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
+        elif data_mode == "intra":
+            self.imgs_path = glob.glob(os.path.join(data_path,"aicm1[1-4]/*/images/*.png"))
+        
+        self.data_len = len(self.imgs_path)
+        self.train_len = int(self.data_len * (1 - valid_ratio))
+        self.imgs_path = self.imgs_path[-500:]
+
+        print('Finished reading the {}_{} set of medical dataset ({} samples found)'
+            .format(data_mode, set_mode, len(self.imgs_path)))
+
+    def augment(self, image, code):
+        print("data augment")
+
+    def __getitem__(self, index):
+        image_path = self.imgs_path[index]
+        label_path = image_path.replace("images","point_labels").replace(".png",".json")
+
+        image = Image.open(image_path).convert("RGB")
+        heatmap = np.array(heatmap_generator(label_path), dtype=np.float32)
+
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+            # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+
+        image = self.transform(image)
+        heatmap = self.transform(heatmap)
+
+        return image,heatmap,image_path
+
+    def __len__(self):
+        return len(self.imgs_path)

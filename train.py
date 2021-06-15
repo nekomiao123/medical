@@ -13,25 +13,27 @@ from dataprocess import Medical_Data
 from network import my_unet
 from network import UNET
 from utils import check_accuracy
+from evaluation import evaluate
 
 # use this to record my loss
 import wandb
 
-# Specify the graphics card
-torch.cuda.set_device(4)
+# 使用多GPU保存模型的时候记得加上.module
+gpus = [4, 5]
+torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
 # hyperparameter
 default_config = dict(
-    batch_size=16,
+    batch_size=32,
     num_epoch=200,
     learning_rate=3e-4,          # learning rate of Adam
     weight_decay=0.01,             # weight decay 
     num_workers=5,
     warm_up_epochs=10,
-    model_path = './model/heatmap_test.pt'
+    model_path = './model/newheat_test.pt'
 )
 
-wandb.init(project='Medical', entity='nekokiku', config=default_config, name='test')
+wandb.init(project='Medical', entity='nekokiku', config=default_config, name='newheat_test')
 config = wandb.config
 # config = default_config
 train_path = './Traindata/'
@@ -74,6 +76,7 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
     model = model.to(device)
     model.device = device
 
+    model = nn.DataParallel(model, device_ids=gpus, output_device=gpus[0])
     # For the segmentation task, we use BCEWithLogitsLoss as the measurement of performance.
     criterion = nn.BCEWithLogitsLoss()
 
@@ -82,12 +85,20 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
 
     best_loss = float('inf')
 
+
     for epoch in range(num_epoch):
+        sensitivity = 0
+        precision = 0
+        f1_score = 0
+        true_positive_all_files = 0
+        false_positive_all_files = 0
+        false_negative_all_files = 0
+
         # ---------- Training ----------
         model.train() 
         train_loss = []
         for batch in tqdm(train_loader):
-            imgs, labels = batch
+            imgs, labels, _= batch
             imgs = imgs.to(device)
             labels = labels.to(device)
 
@@ -110,31 +121,43 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
         valid_loss = []
 
         for batch in tqdm(val_loader):
-            imgs, labels = batch
+            imgs, labels, label_path = batch
             imgs = imgs.to(device)
             labels = labels.to(device)
 
             with torch.no_grad():
                 logits = model(imgs)
-
+            
             loss = criterion(logits, labels)
-
             valid_loss.append(loss.item())
 
+            true_positive_a_batch, false_positive_a_batch, false_negative_a_batch = evaluate(torch.sigmoid(logits), label_path)
+            true_positive_all_files += true_positive_a_batch
+            false_positive_all_files += false_positive_a_batch
+            false_negative_all_files += false_negative_a_batch
+
+        # sensitivity (SEN) = TP + P
+        sensitivity = true_positive_all_files / \
+            (true_positive_all_files + false_negative_all_files)
+        # precision (PPV) = TP / PP
+        precision = true_positive_all_files / \
+            (true_positive_all_files + false_positive_all_files)
+        # F1 score = (2 * PPV * SEN) / (PPV + SEN)
+        f1_score = (2 * precision * sensitivity) / (precision + sensitivity)
+
         valid_loss = sum(valid_loss) / len(valid_loss)
+        print(f"[ Valid | {epoch + 1:03d}/{num_epoch:03d} ] loss = {valid_loss:.5f} precision = {precision:.5f} f1_score = {f1_score:.5f} true_positive = {true_positive_all_files:03d}")
 
-        print(f"[ Valid | {epoch + 1:03d}/{num_epoch:03d} ] loss = {valid_loss:.5f}")
-        check_accuracy(val_loader, model)
-
+        # dice = check_accuracy(val_loader, model)
         # wandb
-        wandb.log({'epoch': epoch + 1, 'train_loss': train_loss, 'val_loss': valid_loss})
+        wandb.log({'epoch': epoch + 1, 'train_loss': train_loss, 'val_loss': valid_loss, 'precision': precision, 'f1_score': f1_score, 'true_positive': true_positive_all_files})
 
         # if the model improves, save a checkpoint at this epoch
         if valid_loss < best_loss:
             best_loss = valid_loss
-            torch.save(model, model_path)
+            # 使用了多GPU需要加上module
+            torch.save(model.module, model_path)
             print('saving model with best_loss {:.5f}'.format(best_loss))
-
 
 def main():
     batch_size = config['batch_size']
@@ -148,3 +171,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+    

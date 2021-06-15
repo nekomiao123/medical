@@ -2,7 +2,6 @@
 import torch
 import torch.nn as nn
 import torchvision.transforms.functional as TF
-
 import segmentation_models_pytorch as smp
 
 def my_unet():
@@ -78,8 +77,6 @@ class UNET(nn.Module):
             x = self.ups[idx+1](concat_skip)
 
         return self.final_conv(x)
-
-
 
 
 def test():
