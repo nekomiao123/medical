@@ -1,6 +1,6 @@
-# This is for the progress bar.
-from tqdm import tqdm
 import math
+import wandb
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
@@ -15,15 +15,14 @@ from network import my_unet
 from network import UNET
 from utils import check_accuracy
 from evaluation import evaluate
+from utils import get_device
 
-# use this to record my loss
-import wandb
 
 # 使用多GPU保存模型的时候记得加上.module
 gpus = [2, 3]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'unet'
+train_name = 'noopen_unet'
 
 # hyperparameter
 default_config = dict(
@@ -40,10 +39,6 @@ wandb.init(project='Medical', entity='nekokiku', config=default_config, name=tra
 config = wandb.config
 # config = default_config
 train_path = './Traindata/'
-
-#check device
-def get_device():
-    return 'cuda' if torch.cuda.is_available() else 'cpu'
 
 device = get_device()
 
@@ -134,13 +129,13 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
             with torch.no_grad():
                 logits = model(imgs)
 
-            loss = criterion(logits, labels)
-            valid_loss.append(loss.item())
-
             true_positive_a_batch, false_positive_a_batch, false_negative_a_batch = evaluate(torch.sigmoid(logits), label_path)
             true_positive_all_files += true_positive_a_batch
             false_positive_all_files += false_positive_a_batch
             false_negative_all_files += false_negative_a_batch
+
+            loss = criterion(logits, labels)
+            valid_loss.append(loss.item())
 
         # sensitivity (SEN) = TP + P
         sensitivity = true_positive_all_files / \
@@ -149,7 +144,8 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
         precision = true_positive_all_files / \
             (true_positive_all_files + false_positive_all_files)
         # F1 score = (2 * PPV * SEN) / (PPV + SEN)
-        f1_score = (2 * precision * sensitivity) / (precision + sensitivity)
+        eps = 1e-6
+        f1_score = (2 * precision * sensitivity) / (precision + sensitivity + eps)
 
         valid_loss = sum(valid_loss) / len(valid_loss)
         print(f"[ Valid | {epoch + 1:03d}/{num_epoch:03d} ] loss = {valid_loss:.5f} precision = {precision:.5f} sensitivity = {sensitivity:.5f} f1_score = {f1_score:.5f} ")

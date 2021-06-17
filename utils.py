@@ -4,6 +4,12 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
 
+
+
+#check device
+def get_device():
+    return 'cuda' if torch.cuda.is_available() else 'cpu'
+
 def im_convert(tensor, ifimg):
     """ 展示数据"""
     image = tensor.to("cpu").clone().detach()
@@ -38,7 +44,6 @@ def check_accuracy(loader, model, device="cuda"):
     dice = dice_score/len(loader)
     model.train()
     return dice
-
 
 def save_checkpoint(state, filename="my_checkpoint.pth.tar"):
     print("=> Saving checkpoint")

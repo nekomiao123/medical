@@ -9,7 +9,7 @@ from pathlib import Path
 from skimage import measure, draw, data, util
 from skimage.filters import threshold_otsu, threshold_local,threshold_minimum,threshold_mean,rank
 from skimage.morphology import disk
-
+from predict import OSTU
 label_file_path = "./Traindata/aicm2/VID000_0/point_labels/sim_000000.json"
 
 def compute(predictions, label_path, radius):
@@ -54,28 +54,14 @@ def im_convert(tensor, ifimg):
         image = image.transpose(1,2,0)
     return image
 
+
 def evaluate(logits, labels_path):
     true_positive_a_batch = 0 
     false_positive_a_batch = 0 
     false_negative_a_batch = 0
     for i in range(len(labels_path)):
         predict = im_convert(logits[i], False)
-        radius = 2
-        selem = disk(radius)
-        threshold_global_otsu = threshold_otsu(predict)
-        image_out = predict >= threshold_global_otsu
-        # generate centre of mass
-        image_out = image_out[:,:,np.newaxis]
-        label_img = measure.label(image_out, connectivity=image_out.ndim)
-        props = measure.regionprops(label_img)
-        # generate prediction points
-        predictions = []
-        for prop in props:
-            # x, y
-            point = {}
-            point["x"] = prop.centroid[0]
-            point["y"] = prop.centroid[1]
-            predictions.append(point)
+        predictions = OSTU(predict)
         true_positive, false_positive, false_negative = compute(predictions, labels_path[i], 6)
         true_positive_a_batch += true_positive
         false_positive_a_batch += false_positive

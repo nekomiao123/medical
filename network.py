@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import torchvision.transforms.functional as TF
@@ -11,9 +10,7 @@ def my_unet():
         in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
         classes=1,                      # model output channels (number of classes in your dataset)
     )
-
     return model
-
 
 class DoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -78,14 +75,13 @@ class UNET(nn.Module):
 
         return self.final_conv(x)
 
-
 def test():
-    x = torch.randn((3, 1, 288, 512))
-    model = UNET(in_channels=1, out_channels=1)
+    x = torch.randn((3, 3, 288, 512))
+    model = my_unet()
     preds = model(x)
     print(x.shape)
     print(preds.shape)
-    assert preds.shape == x.shape
+    # assert preds.shape == x.shape
 
 if __name__ == "__main__":
     test()

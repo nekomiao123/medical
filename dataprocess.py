@@ -41,6 +41,13 @@ def label2mask(file_name):
         img[b[0],b[1]] = 1
     return img
 
+def normalize(image):
+    mean = np.mean(image)
+    var = np.mean(np.square(image-mean))
+    image = (image - mean)/np.sqrt(var)
+    return image
+
+
 def points_to_gaussian_heatmap(centers, height, width, scale):
     if centers:
         gaussians = []
@@ -60,6 +67,8 @@ def points_to_gaussian_heatmap(centers, height, width, scale):
         img = zz.reshape((height,width))
     else:
         img = np.zeros((height,width))
+    
+    # img  = normalize(img)
     return img
 
 def heatmap_generator(file_name, SCALE=64):

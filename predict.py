@@ -1,8 +1,11 @@
-# This is for the progress bar.
-from dataprocess import Medical_Data_test, Medical_Data
-from tqdm import tqdm
-import matplotlib.pyplot as plt
 import os
+import json
+import numpy as np
+from tqdm import tqdm
+from pathlib import Path
+from shutil import copyfile
+import matplotlib.pyplot as plt
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -13,21 +16,17 @@ import torchvision.models as models
 from skimage import measure, draw, data, util
 from skimage.filters import threshold_otsu, threshold_local,threshold_minimum,threshold_mean,rank
 from skimage.morphology import disk
-import numpy as np
-import json
-from pathlib import Path
-from shutil import copyfile
+import skimage
+
+from utils import im_convert, get_device
+from dataprocess import Medical_Data_test, Medical_Data
 
 # Specify the graphics card
 torch.cuda.set_device(0)
 
-#check device
-def get_device():
-    return 'cuda' if torch.cuda.is_available() else 'cpu'
-
 device = get_device()
 
-def to_json(props,img_path):
+def to_json(points,img_path):
     '''
     生成json文件
     '''
@@ -39,13 +38,13 @@ def to_json(props,img_path):
     json_out["subfolderName"] = video_name
     json_out["imageFileName"] = image_name
 
-    points = []
-    for prop in props:
-        # x,y
-        point = {}
-        point["x"] = prop.centroid[0]
-        point["y"] = prop.centroid[1]
-        points.append(point)
+    # points = []
+    # for prop in props:
+    #     # x,y
+    #     point = {}
+    #     point["x"] = prop.centroid[0]
+    #     point["y"] = prop.centroid[1]
+    #     points.append(point)
     json_out["points"] = points
 
     if not Path("./output/"+floder_name+"/"+video_name+"/").exists():
@@ -56,33 +55,45 @@ def to_json(props,img_path):
         # print("This json file has been saved!")
     # copyfile(label_path, "./output/labels/"+label_path.split("/")[-1])
 
-def to_OSTU(predict, img_path):
+def OSTU(predict):
     radius = 2
     selem = disk(radius)
-    local_otsu = rank.otsu(predict, selem)
     threshold_global_otsu = threshold_otsu(predict)
     image_out = predict >= threshold_global_otsu
+    ## 画图
     # plt.imshow(image_out)
-    # plt.savefig('./pic/'+img_path.split("/")[-1].replace(".json","png"))
+    # plt.savefig('./pic/'+img_path.split("/")[-1].replace("json","png"))
     # plt.show()
 
-    # generate centre of mass
-    image_out = image_out[:,:,np.newaxis]
-    label_img = measure.label(image_out, connectivity=image_out.ndim)
-    props = measure.regionprops(label_img)
-    # 生成json文件
-    to_json(props,img_path)
+    # 开运算
+    # 圆形kernel
+    # kernel = skimage.morphology.disk(2)
+    # image_out =skimage.morphology.opening(image_out, kernel)
+    ## 画图
+    # plt.imshow(image_out)
+    # plt.savefig('./pic/open.png')
 
-def im_convert(tensor, ifimg):
-    """ 展示数据"""
-    image = tensor.to("cpu").clone().detach()
-    image = image.numpy().squeeze()
-    # print(image.dtype)
-    # image = image.astype(np.uint8)
-    if ifimg:
-        image = image.transpose(1,2,0)
-    # image = image.clip(0, 1)
-    return image
+    # generate centre of mass
+    # image_out = image_out[:,:,np.newaxis]
+    label_img = measure.label(image_out, connectivity=2)
+    props = measure.regionprops(label_img)
+    # generate prediction points
+    points = []
+    for prop in props:
+        # x, y
+        point = {}
+        point["x"] = prop.centroid[0]
+        point["y"] = prop.centroid[1]
+        points.append(point)
+
+    # for point in points:
+    #     x = int(point["x"])
+    #     y = int(point["y"])
+    #     image_out[x,y] = 0
+    # plt.imshow(image_out)
+    # plt.savefig('./pic/open_points.png')
+
+    return points
 
 def predict(model_path, test_loader):
 
@@ -107,14 +118,18 @@ def predict(model_path, test_loader):
 
         with torch.no_grad():
             logits = torch.sigmoid(model(imgs))
-            # logits = (logits > 0.5).float()
+            # logits = (logits > 1e-7)
         # print(logits)
 
         logit = im_convert(logits, False)
         plt.imshow(logit)
         plt.savefig('./pic/predict.png')
         plt.show()
-
+        # print(imgs_path)
+        # print(logit)
+        # points = OSTU(logit)
+        # 生成json文件
+        # to_json(points,img_path[0])
         # for i in range(len(imgs_path)):
         #     predict = im_convert(logits[i], False)
         #     to_OSTU(predict,imgs_path[i])
@@ -123,7 +138,7 @@ def main():
     batch_size = 1
     num_workers = 1
     test_path = './Traindata/'
-    model_path = './model/newheat_test.pt'
+    model_path = './model/unet.pt'
     test_dataset = Medical_Data(test_path, data_mode='simulator', set_mode='test')
     test_loader = torch.utils.data.DataLoader(
             dataset=test_dataset,
