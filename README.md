@@ -3,8 +3,12 @@
 - lib里面是存放各种工具文件的地方
 - network是网络架构 
 
-TPR即为敏感度(sensitivity),衡量了分类器对正例的识别能力
-PPV即为精确率(Precision),表示被分为正例的示例中实际为正例的比例
+TP 就是正确的点，FP就是标错的点，FN就是标漏的点
+sensitivity (TPR) = TP / TP + FN  
+precision (PPV) = TP / TP + FP  
+TPR即为敏感度(sensitivity) 所有的点里面标对了多少个
+PPV即为精确率(Precision) 标的点里面对了多少个
+
 
 ## Simu
 |  model         |  TPR(sensitivity)  |  PPV(Precision)    |

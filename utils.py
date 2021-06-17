@@ -4,8 +4,6 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
 
-
-
 #check device
 def get_device():
     return 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -17,6 +15,11 @@ def im_convert(tensor, ifimg):
     if ifimg:
         image = image.transpose(1,2,0)
     return image
+
+
+
+
+
 
 def check_accuracy(loader, model, device="cuda"):
     num_correct = 0

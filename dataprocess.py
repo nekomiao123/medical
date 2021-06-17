@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from torchvision import transforms
 from scipy.stats import multivariate_normal
 import cv2
+from utils import im_convert
 
 def generate_mask(img_height,img_width,radius,center_x,center_y):
     y,x=np.ogrid[0:img_height,0:img_width]
@@ -26,9 +27,6 @@ def label2mask(file_name):
     for point in points:
         point_out = [point["x"],point["y"]]
         point_outs.append(point_out)
-    '''
-    change place
-    '''
     circles = []
     # 画圆
     for a in point_outs:
@@ -42,11 +40,9 @@ def label2mask(file_name):
     return img
 
 def normalize(image):
-    mean = np.mean(image)
-    var = np.mean(np.square(image-mean))
-    image = (image - mean)/np.sqrt(var)
-    return image
-
+    _range = np.max(image) - np.min(image)
+    img = (image - np.min(image)) / _range
+    return img
 
 def points_to_gaussian_heatmap(centers, height, width, scale):
     if centers:
@@ -65,19 +61,21 @@ def points_to_gaussian_heatmap(centers, height, width, scale):
         # evaluate kernels at grid points
         zz = sum(g.pdf(xxyy) for g in gaussians)
         img = zz.reshape((height,width))
+
+        # normalize to 0 and 1
+        img = normalize(img)
     else:
         img = np.zeros((height,width))
-    
-    # img  = normalize(img)
+
     return img
 
-def heatmap_generator(file_name, SCALE=64):
+def heatmap_generator(file_name, SCALE = 32):
     file_in = json.load(open(file_name))
     points = file_in["points"]
-    point_outs = []
     height = file_in["imageHeight"]
     width = file_in["imageWidth"]
-    # img = np.zeros((height,width),dtype = np.uint8)
+    point_outs = []
+
     for point in points:
         point_out = [point["x"],point["y"]]
         point_outs.append(point_out)
@@ -86,7 +84,7 @@ def heatmap_generator(file_name, SCALE=64):
     return img
 
 class Medical_Data(Dataset):
-    def __init__(self, data_path, data_mode, set_mode, valid_ratio=0.2):
+    def __init__(self, data_path, data_mode, set_mode, valid_ratio = 0.2):
         '''
         data_path: data path.
         data_mode: simulator or intra data.
@@ -152,34 +150,26 @@ class Medical_Data(Dataset):
     def __len__(self):
         return len(self.imgs_path)
 
-def im_convert(tensor, ifimg):
-    """ 展示数据"""
-    image = tensor.to("cpu").clone().detach()
-    image = image.numpy().squeeze()
-    if ifimg:
-        image = image.transpose(1,2,0)
-    return image
-
-# if __name__ == "__main__":
-#     # simulator_dataset = Medical_Data("./Traindata/","simulator","test")
-#     simulator_dataset = Medical_Data("./Traindata/","simulator","train")
-#     # simulator_dataset = Medical_Data("./Traindata/","simulator","valid")
-#     # intra_dataset = Medical_Data("./Traindata/","intra","test")
-#     simulator_loader = torch.utils.data.DataLoader(dataset=simulator_dataset,
-#                                                batch_size=1, 
-#                                                shuffle=True)
-#     dataiter = iter(simulator_loader)
-#     images, labels = dataiter.next()
-#     print(images.shape)
-#     print(labels.shape)
-#     image = im_convert(images, True)
-#     label = im_convert(labels, False)
-#     plt.imshow(image)
-#     plt.savefig('./pic/images.png')
-#     plt.show()
-#     plt.imshow(label)
-#     plt.savefig('./pic/heatmap.png')
-#     plt.show()
+if __name__ == "__main__":
+    # simulator_dataset = Medical_Data("./Traindata/","simulator","test")
+    simulator_dataset = Medical_Data("./Traindata/","simulator","train")
+    # simulator_dataset = Medical_Data("./Traindata/","simulator","valid")
+    # intra_dataset = Medical_Data("./Traindata/","intra","test")
+    simulator_loader = torch.utils.data.DataLoader(dataset=simulator_dataset,
+                                               batch_size=1, 
+                                               shuffle=True)
+    dataiter = iter(simulator_loader)
+    images, labels, _ = dataiter.next()
+    print(images.shape)
+    print(labels.shape)
+    image = im_convert(images, True)
+    label = im_convert(labels, False)
+    plt.imshow(image)
+    plt.savefig('./pic/images.png')
+    plt.show()
+    plt.imshow(label)
+    plt.savefig('./pic/testheatmap.png')
+    plt.show()
     # print(images.shape)
     # print(labels.shape)
     # print(images)

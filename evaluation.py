@@ -10,7 +10,7 @@ from skimage import measure, draw, data, util
 from skimage.filters import threshold_otsu, threshold_local,threshold_minimum,threshold_mean,rank
 from skimage.morphology import disk
 from predict import OSTU
-label_file_path = "./Traindata/aicm2/VID000_0/point_labels/sim_000000.json"
+from utils import im_convert
 
 def compute(predictions, label_path, radius):
     label_data = json.load(open(label_path))
@@ -44,16 +44,6 @@ def compute(predictions, label_path, radius):
     false_negative = len([label for index, label in enumerate(labels) if len(
         [tp_prediction for tp_prediction in true_positive_predictions if tp_prediction["label_index"] == index]) == 0])
     return true_positive, false_positive, false_negative
-
-def im_convert(tensor, ifimg):
-    """ 展示数据"""
-    image = tensor.to("cpu").clone().detach()
-    image = image.numpy().squeeze()
-    # image = image.astype(np.uint8)
-    if ifimg:
-        image = image.transpose(1,2,0)
-    return image
-
 
 def evaluate(logits, labels_path):
     true_positive_a_batch = 0 

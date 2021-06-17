@@ -12,23 +12,33 @@ def my_unet():
     )
     return model
 
+# - baseline 中没有实现的
+# - The dropout rate is set to values between 0.3 and 0.5 with the lowest dropout rate in the first downsampling/last upsampling block  ???
+# - our architecture applies zero-padding in the con-volutional layers
+# - The loss function is of the form MSE − SDC
+
+# - The two-channel output masks contain one channel for the suture landmarks and one for the background
+# - The predicted output heatmap is converted into a binary mask by thresholding. 
+# - Then, the centre of mass for each region is determined as point of interest.
+
 class DoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(DoubleConv, self).__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, 3, 1, 1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
+            nn.ELU(inplace=True),
             nn.Conv2d(out_channels, out_channels, 3, 1, 1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
+            nn.ELU(inplace=True),
         )
 
     def forward(self, x):
         return self.conv(x)
 
+# baseline Unet
 class UNET(nn.Module):
-    def __init__(self, in_channels=3, out_channels=1, features=[64, 128, 256, 512]):
+    def __init__(self, in_channels=3, out_channels=1, features=[16, 32, 64, 128]):
 
         super(UNET, self).__init__()
         self.ups = nn.ModuleList()
@@ -73,7 +83,7 @@ class UNET(nn.Module):
             concat_skip = torch.cat((skip_connection, x), dim=1)
             x = self.ups[idx+1](concat_skip)
 
-        return self.final_conv(x)
+        return torch.sigmoid(self.final_conv(x))
 
 def test():
     x = torch.randn((3, 3, 288, 512))

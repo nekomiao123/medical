@@ -38,13 +38,6 @@ def to_json(points,img_path):
     json_out["subfolderName"] = video_name
     json_out["imageFileName"] = image_name
 
-    # points = []
-    # for prop in props:
-    #     # x,y
-    #     point = {}
-    #     point["x"] = prop.centroid[0]
-    #     point["y"] = prop.centroid[1]
-    #     points.append(point)
     json_out["points"] = points
 
     if not Path("./output/"+floder_name+"/"+video_name+"/").exists():
@@ -52,8 +45,6 @@ def to_json(points,img_path):
     
     with open("./output/"+floder_name+"/"+video_name+"/"+img_path.split("/")[-1].replace(".png",".json"),'w') as file_obj:
         json.dump(json_out,file_obj)
-        # print("This json file has been saved!")
-    # copyfile(label_path, "./output/labels/"+label_path.split("/")[-1])
 
 def OSTU(predict):
     radius = 2
@@ -67,8 +58,8 @@ def OSTU(predict):
 
     # 开运算
     # 圆形kernel
-    # kernel = skimage.morphology.disk(2)
-    # image_out =skimage.morphology.opening(image_out, kernel)
+    kernel = skimage.morphology.disk(2)
+    image_out =skimage.morphology.opening(image_out, kernel)
     ## 画图
     # plt.imshow(image_out)
     # plt.savefig('./pic/open.png')
@@ -92,7 +83,6 @@ def OSTU(predict):
     #     image_out[x,y] = 0
     # plt.imshow(image_out)
     # plt.savefig('./pic/open_points.png')
-
     return points
 
 def predict(model_path, test_loader):
@@ -138,7 +128,7 @@ def main():
     batch_size = 1
     num_workers = 1
     test_path = './Traindata/'
-    model_path = './model/unet.pt'
+    model_path = './model/nnew_unet.pt'
     test_dataset = Medical_Data(test_path, data_mode='simulator', set_mode='test')
     test_loader = torch.utils.data.DataLoader(
             dataset=test_dataset,
