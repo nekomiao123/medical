@@ -12,9 +12,15 @@ from skimage.morphology import disk
 from predict import OSTU
 from utils import im_convert
 
+from PIL import Image
+import torch
+from dataprocess import Medical_Data_test, Medical_Data
+
 def compute(predictions, label_path, radius):
     label_data = json.load(open(label_path))
     labels = label_data["points"]
+    # print("real numbers")
+    # print(len(labels))
     labels_in_radius_of_all_predictions = []
     for prediction_index, prediction in enumerate(predictions):
         labels_in_radius_of_prediction = []
@@ -57,3 +63,38 @@ def evaluate(logits, labels_path):
         false_positive_a_batch += false_positive
         false_negative_a_batch += false_negative
     return true_positive_a_batch, false_positive_a_batch, false_negative_a_batch
+
+def evaluater(logits, labels_path):
+    true_positive_a_batch = 0 
+    false_positive_a_batch = 0 
+    false_negative_a_batch = 0
+    for i in range(len(labels_path)):
+        predict = im_convert(logits[i], False)
+        predictions = OSTU(predict)
+        print("predict numbers")
+        print(len(predictions))
+        print(predictions)
+        true_positive, false_positive, false_negative = compute(predictions, labels_path[i], 6)
+        true_positive_a_batch += true_positive
+        false_positive_a_batch += false_positive
+        false_negative_a_batch += false_negative
+    print("true_positive_a_batch:",true_positive_a_batch, "false_positive_a_batch:",false_positive_a_batch, "false_negative_a_batch",false_negative_a_batch)
+
+
+if __name__=='__main__':
+    batch_size = 1
+    num_workers = 1
+    test_path = './Traindata/'
+    test_dataset = Medical_Data(test_path, data_mode='simulator', set_mode='test')
+    test_loader = torch.utils.data.DataLoader(
+            dataset=test_dataset,
+            batch_size=batch_size, 
+            shuffle=False
+        )
+    dataiter = iter(test_loader)
+    image, label, label_path = dataiter.next()
+    print(label_path[0])
+    l_path = []
+    l_path.append(label_path[0])
+    evaluater(label, l_path)
+

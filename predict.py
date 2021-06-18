@@ -53,14 +53,14 @@ def OSTU(predict):
     image_out = predict >= threshold_global_otsu
     ## 画图
     # plt.imshow(image_out)
-    # plt.savefig('./pic/'+img_path.split("/")[-1].replace("json","png"))
+    # plt.savefig('./pic/image_out.png')
     # plt.show()
 
     # 开运算
     # 圆形kernel
     kernel = skimage.morphology.disk(2)
     image_out =skimage.morphology.opening(image_out, kernel)
-    ## 画图
+    # 画图
     # plt.imshow(image_out)
     # plt.savefig('./pic/open.png')
 
@@ -71,18 +71,19 @@ def OSTU(predict):
     # generate prediction points
     points = []
     for prop in props:
-        # x, y
+        # 这里注意x，y别搞反了,输入是 288x512,第零维度是y,第一维是x，
         point = {}
-        point["x"] = prop.centroid[0]
-        point["y"] = prop.centroid[1]
+        point["x"] = prop.centroid[1]
+        point["y"] = prop.centroid[0]
         points.append(point)
 
     # for point in points:
     #     x = int(point["x"])
     #     y = int(point["y"])
-    #     image_out[x,y] = 0
+    #     image_out[y,x] = 0
     # plt.imshow(image_out)
     # plt.savefig('./pic/open_points.png')
+
     return points
 
 def predict(model_path, test_loader):
@@ -93,6 +94,7 @@ def predict(model_path, test_loader):
 
     for batch in tqdm(test_loader):
         imgs, labels, imgs_path = batch
+        print(imgs_path)
         imgs = imgs.to(device)
         labels = labels.to(device)
 
@@ -128,7 +130,7 @@ def main():
     batch_size = 1
     num_workers = 1
     test_path = './Traindata/'
-    model_path = './model/nnew_unet.pt'
+    model_path = './model/nor_unet.pt'
     test_dataset = Medical_Data(test_path, data_mode='simulator', set_mode='test')
     test_loader = torch.utils.data.DataLoader(
             dataset=test_dataset,

@@ -108,7 +108,7 @@ class Medical_Data(Dataset):
         elif set_mode == 'valid':
             self.imgs_path = self.imgs_path[self.train_len:]
         elif set_mode == 'test':
-            self.imgs_path = self.imgs_path[-1:]
+            self.imgs_path = self.imgs_path[-100:]
 
         print('Finished reading the {}_{} set of medical dataset ({} samples found)'
             .format(data_mode, set_mode, len(self.imgs_path)))

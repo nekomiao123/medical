@@ -3,13 +3,31 @@ import torch.nn as nn
 import torchvision.transforms.functional as TF
 import segmentation_models_pytorch as smp
 
-def my_unet():
-    model = smp.Unet(
-        encoder_name="resnet34",        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-        encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
-        in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-        classes=1,                      # model output channels (number of classes in your dataset)
-    )
+def my_unet(modelname):
+    if modelname == 'Unet':
+        model = smp.Unet(
+            encoder_name="resnet34",        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+            encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+            in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+            classes=1,                      # model output channels (number of classes in your dataset)
+        )
+    elif modelname == 'UnetPlusPlus':
+        model = smp.UnetPlusPlus(
+            encoder_name="resnet34",        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+            encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+            in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+            classes=1,   
+        )
+    elif modelname == 'DeepLabV3':
+        model = smp.DeepLabV3(
+            encoder_name="resnet34",        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+            encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+            in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+            classes=1,  
+        )
+    else: 
+        print("model name are wrong")
+
     return model
 
 # - baseline 中没有实现的
@@ -87,7 +105,7 @@ class UNET(nn.Module):
 
 def test():
     x = torch.randn((3, 3, 288, 512))
-    model = my_unet()
+    model = my_unet(modelname='DeepLabV3')
     preds = model(x)
     print(x.shape)
     print(preds.shape)

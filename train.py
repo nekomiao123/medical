@@ -21,13 +21,13 @@ from utils import get_device
 gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'baseline_unet'
+train_name = 'new_DeepLabV3'
 
 # hyperparameter
 default_config = dict(
     batch_size=32,
     num_epoch=200,
-    learning_rate=1.5e-4,          # learning rate of Adam
+    learning_rate=1e-4,          # learning rate of Adam
     weight_decay=0.01,             # weight decay 
     num_workers=5,
     warm_up_epochs=10,
@@ -69,7 +69,7 @@ def pre_data(batch_size, num_workers):
 def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, model_path):
 
     # model 
-    model = UNET()
+    model = my_unet(modelname='DeepLabV3')
     model = model.to(device)
     model.device = device
 
@@ -128,7 +128,7 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
             with torch.no_grad():
                 logits = model(imgs)
 
-            true_positive_a_batch, false_positive_a_batch, false_negative_a_batch = evaluate(logits, label_path)
+            true_positive_a_batch, false_positive_a_batch, false_negative_a_batch = evaluate(torch.sigmoid(logits), label_path)
             true_positive_all_files += true_positive_a_batch
             false_positive_all_files += false_positive_a_batch
             false_negative_all_files += false_negative_a_batch
@@ -153,7 +153,7 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
 
         # learning rate decay and print 
         # scheduler.step()
-        realLearningRate = 1.5e-4
+        realLearningRate = learning_rate
         # wandb
         wandb.log({'epoch': epoch + 1, 'train_loss': train_loss, 'val_loss': valid_loss, 'precision': precision, 'f1_score': f1_score, 'sensitivity': sensitivity, 'LearningRate':realLearningRate})
 
