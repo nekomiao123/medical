@@ -9,7 +9,7 @@ from pathlib import Path
 from skimage import measure, draw, data, util
 from skimage.filters import threshold_otsu, threshold_local,threshold_minimum,threshold_mean,rank
 from skimage.morphology import disk
-from predict import OSTU
+from predict import OSTU, OSTU_test
 from utils import im_convert
 
 from PIL import Image
@@ -70,10 +70,7 @@ def evaluater(logits, labels_path):
     false_negative_a_batch = 0
     for i in range(len(labels_path)):
         predict = im_convert(logits[i], False)
-        predictions = OSTU(predict)
-        print("predict numbers")
-        print(len(predictions))
-        print(predictions)
+        predictions = OSTU_test(predict)
         true_positive, false_positive, false_negative = compute(predictions, labels_path[i], 6)
         true_positive_a_batch += true_positive
         false_positive_a_batch += false_positive
@@ -89,12 +86,16 @@ if __name__=='__main__':
     test_loader = torch.utils.data.DataLoader(
             dataset=test_dataset,
             batch_size=batch_size, 
-            shuffle=False
+            shuffle=True
         )
     dataiter = iter(test_loader)
     image, label, label_path = dataiter.next()
     print(label_path[0])
     l_path = []
     l_path.append(label_path[0])
+    print("before cut")
+    true_positive_a_batch, false_positive_a_batch, false_negative_a_batch = evaluate(label, l_path)
+    print("true_positive_a_batch:",true_positive_a_batch, "false_positive_a_batch:",false_positive_a_batch, "false_negative_a_batch",false_negative_a_batch)
+    print("after cut")
     evaluater(label, l_path)
 

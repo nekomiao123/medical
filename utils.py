@@ -16,11 +16,6 @@ def im_convert(tensor, ifimg):
         image = image.transpose(1,2,0)
     return image
 
-
-
-
-
-
 def check_accuracy(loader, model, device="cuda"):
     num_correct = 0
     num_pixels = 0

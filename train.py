@@ -18,19 +18,18 @@ from evaluation import evaluate
 from utils import get_device
 
 # 使用多GPU保存模型的时候记得加上.module
-gpus = [4, 5]
+gpus = [2, 3]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'new_DeepLabV3'
-
+train_name = 'lr_Unet'
 # hyperparameter
 default_config = dict(
     batch_size=32,
     num_epoch=200,
-    learning_rate=1e-4,          # learning rate of Adam
+    learning_rate=1e-4,            # learning rate of Adam
     weight_decay=0.01,             # weight decay 
     num_workers=5,
-    warm_up_epochs=10,
+    warm_up_epochs=5,
     model_path = './model/'+train_name+'.pt'
 )
 
@@ -69,7 +68,7 @@ def pre_data(batch_size, num_workers):
 def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, model_path):
 
     # model 
-    model = my_unet(modelname='DeepLabV3')
+    model = my_unet(modelname='Unet')
     model = model.to(device)
     model.device = device
 
@@ -81,8 +80,8 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
     optimizer = torch.optim.AdamW(model.parameters(), lr = learning_rate, weight_decay=weight_decay)
 
     # warm_up_with_cosine_lr
-    # warm_up_with_cosine_lr = lambda epoch: epoch / config['warm_up_epochs'] if epoch <= config['warm_up_epochs'] else 0.5 * ( math.cos((epoch - config['warm_up_epochs']) /(num_epoch - config['warm_up_epochs']) * math.pi) + 1)
-    # scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_cosine_lr)
+    warm_up_with_cosine_lr = lambda epoch: epoch / config['warm_up_epochs'] if epoch <= config['warm_up_epochs'] else 0.5 * ( math.cos((epoch - config['warm_up_epochs']) /(num_epoch - config['warm_up_epochs']) * math.pi) + 1)
+    scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_cosine_lr)
 
     best_loss = float('inf')
 
@@ -152,8 +151,8 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
         # dice = check_accuracy(val_loader, model)
 
         # learning rate decay and print 
-        # scheduler.step()
-        realLearningRate = learning_rate
+        scheduler.step()
+        realLearningRate = scheduler.get_last_lr()[0]
         # wandb
         wandb.log({'epoch': epoch + 1, 'train_loss': train_loss, 'val_loss': valid_loss, 'precision': precision, 'f1_score': f1_score, 'sensitivity': sensitivity, 'LearningRate':realLearningRate})
 
