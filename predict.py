@@ -18,7 +18,7 @@ from skimage.filters import threshold_otsu, threshold_local,threshold_minimum,th
 from skimage.morphology import disk
 import skimage
 
-from utils import im_convert, get_device
+from utils import im_convert, get_device, check_accuracy
 from dataprocess import Medical_Data_test, Medical_Data
 
 # Specify the graphics card
@@ -46,6 +46,24 @@ def to_json(points,img_path):
     with open("./output/"+floder_name+"/"+video_name+"/"+img_path.split("/")[-1].replace(".png",".json"),'w') as file_obj:
         json.dump(json_out,file_obj)
 
+def generate_points(image_out, connectivity=2):
+    # generate centre of mass
+    label_img = measure.label(image_out, connectivity=2)
+    props = measure.regionprops(label_img)
+    # generate prediction points
+    points = []
+    areas = []
+    bboxs = []
+    for prop in props:
+        # 这里注意x，y别搞反了,输入是 288x512,第零维度是y,第一维是x，
+        point = {}
+        point["y"] = prop.centroid[0]
+        point["x"] = prop.centroid[1]
+        bboxs.append(prop.bbox)
+        points.append(point)
+        areas.append(prop.area)
+    return points, areas, bboxs
+
 def OSTU(predict):
     radius = 2
     selem = disk(radius)
@@ -54,36 +72,63 @@ def OSTU(predict):
     # 开运算  圆形kernel
     kernel = skimage.morphology.disk(2)
     image_out =skimage.morphology.opening(image_out, kernel)
-    # generate centre of mass
-    label_img = measure.label(image_out, connectivity=2)
-    props = measure.regionprops(label_img)
-    # generate prediction points
-    points = []
-    for prop in props:
-        # 这里注意x，y别搞反了,输入是 288x512,第零维度是y,第一维是x，
-        point = {}
-        point["y"] = prop.centroid[0]
-        point["x"] = prop.centroid[1]
-        points.append(point)
+    # 生成点
+    points, areas, bboxs = generate_points(image_out)
+    points_big = []
+    bboxs_big = []
 
-    return points
+    if len(areas) > 0:
+        area_average = int(sum(areas)/len(areas))
+        for i in range(len(areas)):
+            if areas[i] > area_average:
+                points_big.append(points[i])
+                bboxs_big.append(bboxs[i])
+
+    if len(points_big):
+        img_out = check_out(image_out,points_big,bboxs_big)
+        points, areas, bboxs = generate_points(img_out)
+        return points
+    else:
+        return points
 
 
-def check_out(image_out,points_big):
-    for point_big in points_big:
-        x = int(point_big["x"])
-        y = int(point_big["y"])
-        flag = 0
-        for i in range(0,288):
-            if image_out[i,x] == True and image_out[i-1,x] == False:
-                image_out[i,x] = False
-                flag =1
-            if i<287 and image_out[i,x] == False and image_out[i+1,x]== False and flag==1:
-                break
-            elif i ==287:
-                image_out[i,x] = False
+def check_out(image_out,points_big,bboxs_big):
+    # print(image_out.shape[0],image_out.shape[1])
+    for i in range(len(points_big)):
+        x = int(points_big[i]["x"])
+        y = int(points_big[i]["y"])
+        ymin = bboxs_big[i][0]
+        xmin = bboxs_big[i][1]
+        ymax = bboxs_big[i][2]
+        xmax = bboxs_big[i][3]
+        # print("xmin",xmin)
+        # print("ymin",ymin)
+        # print("xmax",xmax)
+        # print("ymax",ymax)
+        if xmax-xmin<=ymax-ymin:
+            # y don't change
+            flag = 0
+            for i in range(xmin,xmax):
+                if image_out[y,i] == True and image_out[y,i-1] == False:
+                    image_out[y,i] = False
+                    flag = 1
+                if i<image_out.shape[1]-1 and image_out[y,i] == False and image_out[y,i+1]== False and flag==1:
+                    break
+                elif i ==image_out.shape[1]-1:
+                    image_out[y,i] = False
+
+        elif xmax-xmin>ymax-ymin:
+            # x don't change
+            flag = 0
+            for i in range(ymin,ymax):
+                if image_out[i,x] == True and image_out[i-1,x] == False:
+                    image_out[i,x] = False
+                    flag =1
+                if i<image_out.shape[0]-1 and image_out[i,x] == False and image_out[i+1,x]== False and flag==1:
+                    break
+                elif i ==image_out.shape[0]-1:
+                    image_out[i,x] = False
     return image_out
-
 
 def OSTU_test(predict):
     radius = 2
@@ -111,11 +156,13 @@ def OSTU_test(predict):
     # generate prediction points
     points = []
     areas = []
+    bboxs = []
     for prop in props:
         # 这里注意x，y别搞反了,输入是 288x512,第零维度是y,第一维是x，
         point = {}
         point["y"] = prop.centroid[0]
         point["x"] = prop.centroid[1]
+        bboxs.append(prop.bbox)
         points.append(point)
         areas.append(prop.area)
     print("before predict number",len(points))
@@ -128,12 +175,14 @@ def OSTU_test(predict):
     # return points
 
     points_big = []
+    bboxs_big = []
     area_average = int(sum(areas)/len(areas))
     for i in range(len(areas)):
         if areas[i] > area_average:
             points_big.append(points[i])
+            bboxs_big.append(bboxs[i])
     if len(points_big):
-        img_out = check_out(image_out,points_big)
+        img_out = check_out(image_out,points_big,bboxs_big)
         # print(points_big)
         # print("continue")
         label_img = measure.label(img_out, connectivity=2)
@@ -166,7 +215,7 @@ def predict(model_path, test_loader):
 
     for batch in tqdm(test_loader):
         imgs, labels, imgs_path = batch
-        print(imgs_path)
+        # print(imgs_path)
         imgs = imgs.to(device)
         labels = labels.to(device)
 
@@ -183,6 +232,8 @@ def predict(model_path, test_loader):
         with torch.no_grad():
             logits = torch.sigmoid(model(imgs))
             # logits = (logits > 1e-7)
+
+        # check_accuracy(test_loader, model)
         # print(logits)
 
         logit = im_convert(logits, False)
@@ -191,7 +242,7 @@ def predict(model_path, test_loader):
         plt.show()
         # print(imgs_path)
         # print(logit)
-        points = OSTU(logit)
+        # points = OSTU(logit)
         points = OSTU_test(logit)
         # 生成json文件
         # to_json(points,img_path[0])

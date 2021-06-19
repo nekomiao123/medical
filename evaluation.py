@@ -19,8 +19,6 @@ from dataprocess import Medical_Data_test, Medical_Data
 def compute(predictions, label_path, radius):
     label_data = json.load(open(label_path))
     labels = label_data["points"]
-    # print("real numbers")
-    # print(len(labels))
     labels_in_radius_of_all_predictions = []
     for prediction_index, prediction in enumerate(predictions):
         labels_in_radius_of_prediction = []
@@ -64,6 +62,7 @@ def evaluate(logits, labels_path):
         false_negative_a_batch += false_negative
     return true_positive_a_batch, false_positive_a_batch, false_negative_a_batch
 
+
 def evaluater(logits, labels_path):
     true_positive_a_batch = 0 
     false_positive_a_batch = 0 
@@ -76,7 +75,6 @@ def evaluater(logits, labels_path):
         false_positive_a_batch += false_positive
         false_negative_a_batch += false_negative
     print("true_positive_a_batch:",true_positive_a_batch, "false_positive_a_batch:",false_positive_a_batch, "false_negative_a_batch",false_negative_a_batch)
-
 
 if __name__=='__main__':
     batch_size = 1
@@ -93,9 +91,6 @@ if __name__=='__main__':
     print(label_path[0])
     l_path = []
     l_path.append(label_path[0])
-    print("before cut")
-    true_positive_a_batch, false_positive_a_batch, false_negative_a_batch = evaluate(label, l_path)
-    print("true_positive_a_batch:",true_positive_a_batch, "false_positive_a_batch:",false_positive_a_batch, "false_negative_a_batch",false_negative_a_batch)
     print("after cut")
     evaluater(label, l_path)
 

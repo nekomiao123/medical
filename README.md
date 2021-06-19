@@ -16,7 +16,7 @@ PPV即为精确率(Precision) 标的点里面对了多少个
 |  model         |  TPR(sensitivity)  |  PPV(Precision)    |
 |  ----          | ----  | ----    |
 | Simu-baseline  | 61.60% |  81.50%  |
-| Simu-ourUnet   |       |         |
+| Simu-ResnextUnet   |  62.72%     |   72.98%      |
 
 
 ## Intra

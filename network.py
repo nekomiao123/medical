@@ -11,6 +11,20 @@ def my_unet(modelname):
             in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
             classes=1,                      # model output channels (number of classes in your dataset)
         )
+    elif modelname == 'ResnextUnet':
+        model = smp.Unet(
+            encoder_name="resnext50_32x4d", # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+            encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+            in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+            classes=1,                      # model output channels (number of classes in your dataset)
+        )
+    elif modelname == 'EfficientUnet':
+        model = smp.Unet(
+            encoder_name="efficientnet-b4", # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+            encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+            in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+            classes=1,                      # model output channels (number of classes in your dataset)
+        )
     elif modelname == 'UnetPlusPlus':
         model = smp.UnetPlusPlus(
             encoder_name="resnet34",        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7

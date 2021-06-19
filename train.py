@@ -18,15 +18,15 @@ from evaluation import evaluate
 from utils import get_device
 
 # 使用多GPU保存模型的时候记得加上.module
-gpus = [2, 3]
+gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'lr_Unet'
+train_name = 'lr_ResnextUnett'
 # hyperparameter
 default_config = dict(
     batch_size=32,
     num_epoch=200,
-    learning_rate=1e-4,            # learning rate of Adam
+    learning_rate=1.5e-4,            # learning rate of Adam
     weight_decay=0.01,             # weight decay 
     num_workers=5,
     warm_up_epochs=5,
@@ -68,7 +68,7 @@ def pre_data(batch_size, num_workers):
 def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, model_path):
 
     # model 
-    model = my_unet(modelname='Unet')
+    model = my_unet(modelname='ResnextUnet')
     model = model.to(device)
     model.device = device
 
@@ -84,6 +84,8 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
     scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_cosine_lr)
 
     best_loss = float('inf')
+    # best_dice = 0
+    best_f1 = 0
 
     for epoch in range(num_epoch):
         sensitivity = 0
@@ -142,26 +144,27 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
         precision = true_positive_all_files / \
             (true_positive_all_files + false_positive_all_files)
         # F1 score = (2 * PPV * SEN) / (PPV + SEN)
-        eps = 1e-6
+        eps = 1e-8
         f1_score = (2 * precision * sensitivity) / (precision + sensitivity + eps)
 
+        dice = check_accuracy(val_loader, model)
         valid_loss = sum(valid_loss) / len(valid_loss)
-        print(f"[ Valid | {epoch + 1:03d}/{num_epoch:03d} ] loss = {valid_loss:.5f} precision = {precision:.5f} sensitivity = {sensitivity:.5f} f1_score = {f1_score:.5f} ")
-
-        # dice = check_accuracy(val_loader, model)
+        print(f"[ Valid | {epoch + 1:03d}/{num_epoch:03d} ] loss = {valid_loss:.5f} precision = {precision:.5f} sensitivity = {sensitivity:.5f} f1_score = {f1_score:.5f} dice = {dice:.5f}")
 
         # learning rate decay and print 
         scheduler.step()
         realLearningRate = scheduler.get_last_lr()[0]
         # wandb
-        wandb.log({'epoch': epoch + 1, 'train_loss': train_loss, 'val_loss': valid_loss, 'precision': precision, 'f1_score': f1_score, 'sensitivity': sensitivity, 'LearningRate':realLearningRate})
+        wandb.log({'epoch': epoch + 1, 'train_loss': train_loss, 'val_loss': valid_loss, 'precision': precision, 'f1_score': f1_score, 'sensitivity': sensitivity, 'LearningRate':realLearningRate, 'dice':dice})
 
         # if the model improves, save a checkpoint at this epoch
-        if valid_loss < best_loss:
-            best_loss = valid_loss
+        if f1_score > best_f1:
+            best_f1 = f1_score
             # 使用了多GPU需要加上module
             torch.save(model.module, model_path)
-            print('saving model with best_loss {:.5f}'.format(best_loss))
+            print('saving model with best_f1 {:.5f}'.format(best_f1))
+
+
 
 def main():
     batch_size = config['batch_size']
