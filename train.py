@@ -18,10 +18,10 @@ from evaluation import evaluate
 from utils import get_device
 
 # 使用多GPU保存模型的时候记得加上.module
-gpus = [4, 5]
+gpus = [2, 3]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'ag_lr_ResnextUnet'
+train_name = 'mag_lr_ResnextUnet'
 # hyperparameter
 default_config = dict(
     batch_size=32,

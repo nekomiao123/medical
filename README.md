@@ -20,10 +20,17 @@ baseline augmentation
 - shearing in a range of ±0.1
 - brightness in a range of ±0.2
 - contrast in a range from 0.3 to 0.5
-- random sat- uration in a range from 0.5 to 2.0 and hue in a range of ±0.1
+- random saturation in a range from 0.5 to 2.0 and hue in a range of ±0.1
 - horizontally and vertically with a probability of 50%
 
 baseline also use 5-fold
+
+my augmentation
+- horizontally and vertically with a probability of 50%
+- rotation of ±40◦
+- ColorJitter(p = 0.5)
+- 
+
 
 ## Simu
 |  model         |  TPR(sensitivity)  |  PPV(Precision)    |

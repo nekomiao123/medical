@@ -127,11 +127,11 @@ class Medical_Data(Dataset):
             self.transform = A.Compose(
                     [
                         A.Resize(width=512, height=288),
-                        # A.RandomCrop(width=1280, height=720),
-                        # A.Rotate(limit=40, p=1, border_mode=cv2.BORDER_CONSTANT),
+                        A.Rotate(limit=40, p = 0.7, border_mode=cv2.BORDER_CONSTANT),
                         A.HorizontalFlip(p = 0.5),
                         A.VerticalFlip(p = 0.5),
                         A.ColorJitter(p = 0.5),
+                        A.RandomBrightnessContrast(p=0.5),
                         # A.OneOf([
                         #     A.Blur(blur_limit=3, p=0.5),
                         #     A.ColorJitter(p=0.5),
