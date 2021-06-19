@@ -33,11 +33,13 @@ my augmentation
 
 
 ## Simu
-|  model         |  TPR(sensitivity)  |  PPV(Precision)    |
-|  ----          | ----  | ----    |
-| Simu-baseline  | 61.60% |  81.50%  |
-| Simu-ResnextUnet   |  62.72%     |   72.98%      |
+|  model         |  TPR(sensitivity)  |  PPV(Precision)    | f1 score |
+|  ----          | ----  | ----    |  ---- |
+| Simu-baseline  | 61.60% |  81.50%  |  69.78% |
+| Simu-ResnextUnet   |  62.72%     |   72.98%      |  67.45% |
+| mag_lr_ResnextUnet |  78.07%     |   75.11%      | 76.56%  |
 
+precision = 0.75109 sensitivity = 0.78079 f1_score = 0.76565
 
 ## Intra
 |  model         |  TPR(sensitivity)  |  PPV(Precision)    |
