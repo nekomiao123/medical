@@ -91,7 +91,6 @@ def OSTU(predict):
     else:
         return points
 
-
 def check_out(image_out,points_big,bboxs_big):
     # print(image_out.shape[0],image_out.shape[1])
     for i in range(len(points_big)):
@@ -107,28 +106,33 @@ def check_out(image_out,points_big,bboxs_big):
         # print("ymax",ymax)
         if xmax-xmin<=ymax-ymin:
             # y don't change
-            flag = 0
-            for i in range(xmin,xmax):
-                if image_out[y,i] == True and image_out[y,i-1] == False:
-                    image_out[y,i] = False
-                    flag = 1
-                if i<image_out.shape[1]-1 and image_out[y,i] == False and image_out[y,i+1]== False and flag==1:
-                    break
-                elif i ==image_out.shape[1]-1:
-                    image_out[y,i] = False
+            image_out[y,xmin:xmax] = False
+
+            # flag = 0
+            # for i in range(xmin,xmax):
+            #     if image_out[y,i] == True and image_out[y,i-1] == False:
+            #         image_out[y,i] = False
+            #         flag = 1
+            #     if i<image_out.shape[1]-1 and image_out[y,i] == False and image_out[y,i+1]== False and flag==1:
+            #         break
+            #     elif i ==image_out.shape[1]-1:
+            #         image_out[y,i] = False
 
         elif xmax-xmin>ymax-ymin:
             # x don't change
-            flag = 0
-            for i in range(ymin,ymax):
-                if image_out[i,x] == True and image_out[i-1,x] == False:
-                    image_out[i,x] = False
-                    flag =1
-                if i<image_out.shape[0]-1 and image_out[i,x] == False and image_out[i+1,x]== False and flag==1:
-                    break
-                elif i ==image_out.shape[0]-1:
-                    image_out[i,x] = False
+            image_out[ymin:ymax,x]=False
+            
+            # flag = 0
+            # for i in range(ymin,ymax):
+            #     if image_out[i,x] == True and image_out[i-1,x] == False:
+            #         image_out[i,x] = False
+            #         flag =1
+            #     if i<image_out.shape[0]-1 and image_out[i,x] == False and image_out[i+1,x]== False and flag==1:
+            #         break
+            #     elif i ==image_out.shape[0]-1:
+            #         image_out[i,x] = False
     return image_out
+
 
 def OSTU_test(predict):
     radius = 2
@@ -254,7 +258,7 @@ def main():
     batch_size = 1
     num_workers = 1
     test_path = './Traindata/'
-    model_path = './model/new_Unet.pt'
+    model_path = './model/lr_ResnextUnett.pt'
     test_dataset = Medical_Data(test_path, data_mode='simulator', set_mode='test')
     test_loader = torch.utils.data.DataLoader(
             dataset=test_dataset,

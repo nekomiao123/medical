@@ -10,6 +10,9 @@ from torchvision import transforms
 from scipy.stats import multivariate_normal
 import cv2
 from utils import im_convert
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+
 
 def generate_mask(img_height,img_width,radius,center_x,center_y):
     y,x=np.ogrid[0:img_height,0:img_width]
@@ -108,44 +111,66 @@ class Medical_Data(Dataset):
         elif set_mode == 'valid':
             self.imgs_path = self.imgs_path[self.train_len:]
         elif set_mode == 'test':
-            self.imgs_path = self.imgs_path[-20:]
+            self.imgs_path = self.imgs_path[-1:]
 
         print('Finished reading the {}_{} set of medical dataset ({} samples found)'
             .format(data_mode, set_mode, len(self.imgs_path)))
-
-    def augment(self, image, code):
-        print("data augment")
 
     def __getitem__(self, index):
         image_path = self.imgs_path[index]
         label_path = image_path.replace("images","point_labels").replace(".png",".json")
 
-        image = Image.open(image_path).convert("RGB")
-        heatmap = np.array(heatmap_generator(label_path), dtype=np.float32)
+        image = np.array(Image.open(image_path), dtype=np.float32) / 255.
+        mask = np.array(heatmap_generator(label_path))
 
         if self.set_mode == 'train':
-            self.transform = transforms.Compose([
-                # transforms.Resize((288,512)),
-                # transforms.RandomResizedCrop(224,scale=(0.5,1.0)),
-                # transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            ])
+            self.transform = A.Compose(
+                    [
+                        A.Resize(width=512, height=288),
+                        # A.RandomCrop(width=1280, height=720),
+                        # A.Rotate(limit=40, p=1, border_mode=cv2.BORDER_CONSTANT),
+                        A.HorizontalFlip(p = 0.5),
+                        A.VerticalFlip(p = 0.5),
+                        A.ColorJitter(p = 0.5),
+                        # A.OneOf([
+                        #     A.Blur(blur_limit=3, p=0.5),
+                        #     A.ColorJitter(p=0.5),
+                        # ], p=1.0),
+                        # A.Normalize(
+                        #     mean=[0, 0, 0],
+                        #     std=[1, 1, 1],
+                        #     max_pixel_value=255,
+                        # ),
+                        ToTensorV2(),
+                    ]
+                )
         elif self.set_mode == 'valid':
-           self.transform = transforms.Compose([
-                transforms.ToTensor(),
-                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            ])
+           self.transform = A.Compose(
+                    [
+                        A.Resize(width=512, height=288),
+                        ToTensorV2(),
+                    ]
+                )
         else:
-            self.transform = transforms.Compose([
-                transforms.ToTensor(),
-                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            ])
+             self.transform = A.Compose(
+                    [
+                        A.Resize(width=512, height=288),
+                        ToTensorV2(),
+                    ]
+                )
 
-        image = self.transform(image)
-        heatmap = self.transform(heatmap)
+        if self.transform:
+            augmentations = self.transform(image=image, mask=mask)
+            image = augmentations["image"]
+            mask = augmentations["mask"]
+            # 增加一个维度
+            mask = mask.unsqueeze(0)
 
-        return image, heatmap, label_path
+            # print(image)
+            # print(mask)
+            # print(image.dtype)
+            # print(mask.dtype)
+        return image, mask, label_path
 
     def __len__(self):
         return len(self.imgs_path)
@@ -159,7 +184,8 @@ if __name__ == "__main__":
                                                batch_size=1, 
                                                shuffle=True)
     dataiter = iter(simulator_loader)
-    images, labels, _ = dataiter.next()
+    images, labels, label_path = dataiter.next()
+    print(label_path)
     print(images.shape)
     print(labels.shape)
     image = im_convert(images, True)

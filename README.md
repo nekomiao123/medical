@@ -12,6 +12,19 @@ TPR即为敏感度(sensitivity) 所有的点里面标对了多少个
 PPV即为精确率(Precision) 标的点里面对了多少个  
 
 
+
+baseline augmentation
+- rotation of ±60◦
+- pixel shifting in a range of ±10%
+- mask pixel shifting in a range of ±1%
+- shearing in a range of ±0.1
+- brightness in a range of ±0.2
+- contrast in a range from 0.3 to 0.5
+- random sat- uration in a range from 0.5 to 2.0 and hue in a range of ±0.1
+- horizontally and vertically with a probability of 50%
+
+baseline also use 5-fold
+
 ## Simu
 |  model         |  TPR(sensitivity)  |  PPV(Precision)    |
 |  ----          | ----  | ----    |
