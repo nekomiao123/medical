@@ -18,15 +18,15 @@ from evaluation import evaluate
 from utils import get_device
 
 # 使用多GPU保存模型的时候记得加上.module
-gpus = [2, 3]
+gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'mag_lr_ResnextUnet'
+train_name = 'intra_ResnextUnet'
 # hyperparameter
 default_config = dict(
     batch_size=32,
     num_epoch=200,
-    learning_rate=1.5e-4,            # learning rate of Adam
+    learning_rate=1e-4,            # learning rate of Adam
     weight_decay=0.01,             # weight decay 
     num_workers=5,
     warm_up_epochs=5,
@@ -40,14 +40,14 @@ train_path = './Traindata/'
 
 device = get_device()
 
-def pre_data(batch_size, num_workers):
-    train_dataset = Medical_Data(train_path, data_mode='simulator', set_mode='train')
-    val_dataset = Medical_Data(train_path, data_mode='simulator', set_mode='valid')
+def pre_data(batch_size, num_workers, data_mode='intra'):
+    train_dataset = Medical_Data(train_path, data_mode=data_mode, set_mode='train')
+    val_dataset = Medical_Data(train_path, data_mode=data_mode, set_mode='valid')
     # test_dataset = Medical_Data(test_path, data_mode, set_mode='test')
     train_loader = torch.utils.data.DataLoader(
             dataset=train_dataset,
             batch_size=batch_size, 
-            shuffle=False,
+            shuffle=True,
             num_workers=num_workers
         )
     val_loader = torch.utils.data.DataLoader(
@@ -163,7 +163,6 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
             # 使用了多GPU需要加上module
             torch.save(model.module, model_path)
             print('saving model with best_f1 {:.5f}'.format(best_f1))
-
 
 
 def main():

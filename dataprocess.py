@@ -166,10 +166,6 @@ class Medical_Data(Dataset):
             # 增加一个维度
             mask = mask.unsqueeze(0)
 
-            # print(image)
-            # print(mask)
-            # print(image.dtype)
-            # print(mask.dtype)
         return image, mask, label_path
 
     def __len__(self):
@@ -177,8 +173,8 @@ class Medical_Data(Dataset):
 
 if __name__ == "__main__":
     # simulator_dataset = Medical_Data("./Traindata/","simulator","test")
-    simulator_dataset = Medical_Data("./Traindata/","simulator","train")
-    # simulator_dataset = Medical_Data("./Traindata/","simulator","valid")
+    simulator_dataset = Medical_Data("./Traindata/","intra","train")
+    simulator_dataset = Medical_Data("./Traindata/","intra","valid")
     # intra_dataset = Medical_Data("./Traindata/","intra","test")
     simulator_loader = torch.utils.data.DataLoader(dataset=simulator_dataset,
                                                batch_size=1, 
@@ -191,15 +187,11 @@ if __name__ == "__main__":
     image = im_convert(images, True)
     label = im_convert(labels, False)
     plt.imshow(image)
-    plt.savefig('./pic/images.png')
+    plt.savefig('./pic/intraimages.png')
     plt.show()
     plt.imshow(label)
     plt.savefig('./pic/testheatmap.png')
     plt.show()
-    # print(images.shape)
-    # print(labels.shape)
-    # print(images)
-    # print(labels)
 
 class Medical_Data_test(Dataset):
     def __init__(self, data_path, data_mode, set_mode="test", valid_ratio=0.2):
