@@ -13,7 +13,6 @@ from utils import im_convert
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-
 def generate_mask(img_height,img_width,radius,center_x,center_y):
     y,x=np.ogrid[0:img_height,0:img_width]
     # circle mask
@@ -171,71 +170,79 @@ class Medical_Data(Dataset):
     def __len__(self):
         return len(self.imgs_path)
 
-if __name__ == "__main__":
-    # simulator_dataset = Medical_Data("./Traindata/","simulator","test")
-    simulator_dataset = Medical_Data("./Traindata/","intra","train")
-    simulator_dataset = Medical_Data("./Traindata/","intra","valid")
-    # intra_dataset = Medical_Data("./Traindata/","intra","test")
-    simulator_loader = torch.utils.data.DataLoader(dataset=simulator_dataset,
-                                               batch_size=1, 
-                                               shuffle=True)
-    dataiter = iter(simulator_loader)
-    images, labels, label_path = dataiter.next()
-    print(label_path)
-    print(images.shape)
-    print(labels.shape)
-    image = im_convert(images, True)
-    label = im_convert(labels, False)
-    plt.imshow(image)
-    plt.savefig('./pic/intraimages.png')
-    plt.show()
-    plt.imshow(label)
-    plt.savefig('./pic/testheatmap.png')
-    plt.show()
+class GAN_Data(Dataset):
+    def __init__(self, data_path):
+        self.simu_path = glob.glob(os.path.join(data_path,"aicm[1-9]/*/images/*.png"))
+        self.simu_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
 
-class Medical_Data_test(Dataset):
-    def __init__(self, data_path, data_mode, set_mode="test", valid_ratio=0.2):
-        '''
-        data_path: data path.
-        data_mode: simulator or intra data.
-        set_mode:  train or valid or test.
-        transform: for data augmentation
-        '''
-        self.data_path = data_path
-        self.set_mode = set_mode
+        self.intra_path = glob.glob(os.path.join(data_path,"aicm1[1-4]/*/images/*.png"))
+
+        self.simu_len = len(self.simu_path)
+        self.intra_len = len(self.intra_path)
+
+        self.length_dataset = max(self.simu_len, self.intra_len) # 
+
         self.transform = None
-        if data_mode == "simulator":
-            self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-9]/*/images/*.png"))
-            self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
-        elif data_mode == "intra":
-            self.imgs_path = glob.glob(os.path.join(data_path,"aicm1[1-4]/*/images/*.png"))
-        
-        self.data_len = len(self.imgs_path)
-        self.train_len = int(self.data_len * (1 - valid_ratio))
-        self.imgs_path = self.imgs_path[-500:]
 
-        print('Finished reading the {}_{} set of medical dataset ({} samples found)'
-            .format(data_mode, set_mode, len(self.imgs_path)))
+        print('Finished reading the simu set of medical dataset ({} samples found)'
+            .format(self.simu_len))
 
-    def augment(self, image, code):
-        print("data augment")
+        print('Finished reading the intra set of medical dataset ({} samples found)'
+            .format(self.intra_len))
 
     def __getitem__(self, index):
-        image_path = self.imgs_path[index]
-        label_path = image_path.replace("images","point_labels").replace(".png",".json")
+        simu_path = self.simu_path[index % self.simu_len]
+        intra_path = self.intra_path[index % self.intra_len]
 
-        image = Image.open(image_path).convert("RGB")
-        heatmap = np.array(heatmap_generator(label_path), dtype=np.float32)
+        simu_image = Image.open(simu_path).convert("RGB")
+        intra_image = Image.open(intra_path).convert("RGB")
 
-        self.transform = transforms.Compose([
+        transform = transforms.Compose([
             transforms.ToTensor(),
-            # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
 
-        image = self.transform(image)
-        heatmap = self.transform(heatmap)
+        simu_image = transform(simu_image)
+        intra_image = transform(intra_image)
 
-        return image,heatmap,image_path
+        return simu_image, intra_image
 
     def __len__(self):
-        return len(self.imgs_path)
+        return self.length_dataset
+
+if __name__ == "__main__":
+    # simulator_dataset = Medical_Data("./Traindata/","simulator","test")
+    # simulator_dataset = Medical_Data("./Traindata/","intra","train")
+    # simulator_dataset = Medical_Data("./Traindata/","intra","valid")
+    # # intra_dataset = Medical_Data("./Traindata/","intra","test")
+    # simulator_loader = torch.utils.data.DataLoader(dataset=simulator_dataset,
+    #                                            batch_size=1, 
+    #                                            shuffle=True)
+    # dataiter = iter(simulator_loader)
+    # images, labels, label_path = dataiter.next()
+    # print(label_path)
+    # print(images.shape)
+    # print(labels.shape)
+    # image = im_convert(images, True)
+    # label = im_convert(labels, False)
+    # plt.imshow(image)
+    # plt.savefig('./pic/intraimages.png')
+    # plt.show()
+    # plt.imshow(label)
+    # plt.savefig('./pic/testheatmap.png')
+    # plt.show()
+    gan_dataset = GAN_Data("./Traindata/")
+    gan_loader = torch.utils.data.DataLoader(dataset=gan_dataset,
+                                               batch_size=1, 
+                                               shuffle=True)
+    dataiter = iter(gan_loader)
+    simu, intra = dataiter.next()
+    print(simu.shape)
+    print(intra.shape)
+    simu = im_convert(simu, True)
+    intra = im_convert(intra, True)
+    plt.imshow(simu)
+    plt.savefig('./pic/simu.png')
+    plt.show()
+    plt.imshow(intra)
+    plt.savefig('./pic/intra.png')
+    plt.show()
