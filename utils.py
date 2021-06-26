@@ -36,6 +36,7 @@ def check_accuracy(loader, model, device="cuda"):
 
 def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
     print("=> Saving checkpoint")
+    # 使用了多GPU需要加上module
     checkpoint = {
         "state_dict": model.module.state_dict(),
         "optimizer": optimizer.state_dict(),

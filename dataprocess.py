@@ -204,7 +204,7 @@ class GAN_Data(Dataset):
         simu_image = transform(simu_image)
         intra_image = transform(intra_image)
 
-        return simu_image, intra_image
+        return simu_image, simu_path, intra_image
 
     def __len__(self):
         return self.length_dataset

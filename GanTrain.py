@@ -15,15 +15,15 @@ from utils import save_checkpoint, load_checkpoint
 # torch.cuda.set_device(4)
 
 # 使用多GPU保存模型的时候记得加上.module
-gpus = [0, 1, 2, 3, 4, 5, 6, 7]
+gpus = [2, 3]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
 train_path = './Traindata/'
-train_name = 'gan'
+train_name = '1gan'
 
 default_config = dict(
-    batch_size=8,
-    num_epoch=10,
+    batch_size=1,
+    num_epoch=40,
     learning_rate=1e-5,            # learning rate of Adam
     weight_decay=0.01,             # weight decay 
     num_workers=5,
@@ -32,7 +32,7 @@ default_config = dict(
     SAVE_MODEL = True,
     LOAD_MODEL = False,
     LAMBDA_CYCLE = 10,
-    LAMBDA_IDENTITY = 0.0,
+    LAMBDA_IDENTITY = 0.5,
 
     CHECKPOINT_GEN_SIMU = './ganmodel/gen_simu_'+ train_name + '.pth',
     CHECKPOINT_GEN_INTRA = './ganmodel/gen_intra_'+ train_name + '.pth',
@@ -165,8 +165,8 @@ def train(train_loader, val_loader, learning_rate, num_epoch):
             optim_gen.step()
 
             if idx % 300 == 0:
-                save_image(fake_intra*0.5+0.5, f"pic/intra_{idx}.png")
-                save_image(fake_simu*0.5+0.5, f"pic/simu_{idx}.png")
+                save_image(fake_intra*0.5+0.5, "pic/"+train_name+"intra_"+str(idx)+".png")
+                save_image(fake_simu*0.5+0.5, "pic/"+train_name+"simu_"+str(idx)+".png")
 
             loop.set_postfix(intra_real=intra_reals/(idx+1), intra_fake=intra_fakes/(idx+1))
 
