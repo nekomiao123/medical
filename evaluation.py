@@ -14,7 +14,7 @@ from utils import im_convert
 
 from PIL import Image
 import torch
-from dataprocess import Medical_Data_test, Medical_Data
+from dataprocess import Medical_Data
 
 def compute(predictions, label_path, radius):
     label_data = json.load(open(label_path))

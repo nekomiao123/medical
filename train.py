@@ -21,7 +21,7 @@ from utils import get_device
 gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'intra_ResnextUnet'
+train_name = 'intra_Diceloss'
 # hyperparameter
 default_config = dict(
     batch_size=32,
@@ -65,6 +65,47 @@ def pre_data(batch_size, num_workers, data_mode='intra'):
 
     return train_loader, val_loader
 
+# Dice loss
+class DiceLoss(nn.Module):
+    def __init__(self, weight=None, size_average=True):
+        super(DiceLoss, self).__init__()
+
+    def forward(self, inputs, targets, smooth=1):
+
+        # comment out if your model contains a sigmoid or equivalent activation layer
+        inputs = torch.sigmoid(inputs)       
+
+        #flatten label and prediction tensors
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+
+        intersection = (inputs * targets).sum()                            
+        dice = (2.*intersection + smooth)/(inputs.sum() + targets.sum() + smooth)  
+
+        return 1 - dice
+
+# Dice loss and BCE loss 
+class DiceBCELoss(nn.Module):
+    def __init__(self, weight=None, size_average=True):
+        super(DiceBCELoss, self).__init__()
+
+    def forward(self, inputs, targets, smooth=1):
+        
+        #comment out if your model contains a sigmoid or equivalent activation layer
+        inputs = torch.sigmoid(inputs)       
+
+        #flatten label and prediction tensors
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+
+        intersection = (inputs * targets).sum()                            
+        dice_loss = 1 - (2.*intersection + smooth)/(inputs.sum() + targets.sum() + smooth)
+
+        BCE = F.binary_cross_entropy(inputs, targets, reduction='mean')
+        Dice_BCE = BCE + dice_loss
+
+        return Dice_BCE
+
 def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, model_path):
 
     # model 
@@ -74,7 +115,7 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
 
     model = nn.DataParallel(model, device_ids=gpus, output_device=gpus[0])
     # For the segmentation task, we use BCEWithLogitsLoss as the measurement of performance.
-    criterion = nn.BCEWithLogitsLoss()
+    criterion = DiceLoss()
 
     # Initialize optimizer.
     optimizer = torch.optim.AdamW(model.parameters(), lr = learning_rate, weight_decay=weight_decay)

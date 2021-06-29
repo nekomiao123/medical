@@ -19,7 +19,7 @@ from skimage.morphology import disk
 import skimage
 
 from utils import im_convert, get_device, check_accuracy
-from dataprocess import Medical_Data_test, Medical_Data
+from dataprocess import Medical_Data
 
 # Specify the graphics card
 torch.cuda.set_device(0)
