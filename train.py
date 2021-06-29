@@ -18,10 +18,10 @@ from evaluation import evaluate
 from utils import get_device
 
 # 使用多GPU保存模型的时候记得加上.module
-gpus = [4, 5]
+gpus = [2, 3]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'intra_Diceloss'
+train_name = 'intra_DiceBCEloss'
 # hyperparameter
 default_config = dict(
     batch_size=32,
@@ -90,9 +90,9 @@ class DiceBCELoss(nn.Module):
         super(DiceBCELoss, self).__init__()
 
     def forward(self, inputs, targets, smooth=1):
-        
-        #comment out if your model contains a sigmoid or equivalent activation layer
-        inputs = torch.sigmoid(inputs)       
+
+        # comment out if your model contains a sigmoid or equivalent activation layer
+        # inputs = torch.sigmoid(inputs)       
 
         #flatten label and prediction tensors
         inputs = inputs.view(-1)
@@ -101,7 +101,7 @@ class DiceBCELoss(nn.Module):
         intersection = (inputs * targets).sum()                            
         dice_loss = 1 - (2.*intersection + smooth)/(inputs.sum() + targets.sum() + smooth)
 
-        BCE = F.binary_cross_entropy(inputs, targets, reduction='mean')
+        BCE = F.binary_cross_entropy_with_logits(inputs, targets, reduction='mean')
         Dice_BCE = BCE + dice_loss
 
         return Dice_BCE
@@ -114,8 +114,7 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
     model.device = device
 
     model = nn.DataParallel(model, device_ids=gpus, output_device=gpus[0])
-    # For the segmentation task, we use BCEWithLogitsLoss as the measurement of performance.
-    criterion = DiceLoss()
+    criterion = DiceBCELoss()
 
     # Initialize optimizer.
     optimizer = torch.optim.AdamW(model.parameters(), lr = learning_rate, weight_decay=weight_decay)
