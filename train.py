@@ -21,7 +21,7 @@ from utils import get_device
 gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'intra_test'
+train_name = 'intra_test1'
 # hyperparameter
 default_config = dict(
     batch_size=32,
