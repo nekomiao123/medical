@@ -45,5 +45,6 @@ precision = 0.75109 sensitivity = 0.78079 f1_score = 0.76565
 |  ----          | ----  | ----    | ---- |
 | Intra-baseline | 24.45% |  66.68%  |   35.78%   |
 | mag_lr_ResnextUnet  |    50.11%   |     63.43%    | 55.98%   |
- 
-sen = 50.11 precision=63.43 f1 = 55.98
+| dice_ResnextUnet  |    55.19%   |     66.45%    | 60.30%   |
+
+precision = 0.66451 sensitivity = 0.55193 f1_score = 0.60301 dice = 0.36288 

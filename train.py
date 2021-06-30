@@ -18,10 +18,10 @@ from evaluation import evaluate
 from utils import get_device
 
 # 使用多GPU保存模型的时候记得加上.module
-gpus = [2, 3]
+gpus = [6, 7]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'intra_DiceBCEloss'
+train_name = 'intra_DiceLoss_prescse'
 # hyperparameter
 default_config = dict(
     batch_size=32,
@@ -106,6 +106,29 @@ class DiceBCELoss(nn.Module):
 
         return Dice_BCE
 
+# Focal loss
+ALPHA = 0.8
+GAMMA = 2
+class FocalLoss(nn.Module):
+    def __init__(self, weight=None, size_average=True):
+        super(FocalLoss, self).__init__()
+
+    def forward(self, inputs, targets, alpha=ALPHA, gamma=GAMMA, smooth=1):
+
+        #comment out if your model contains a sigmoid or equivalent activation layer
+        # inputs = torch.sigmoid(inputs)       
+
+        #flatten label and prediction tensors
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+
+        #first compute binary cross-entropy 
+        BCE = F.binary_cross_entropy_with_logits(inputs, targets, reduction='mean')
+        BCE_EXP = torch.exp(-BCE)
+        focal_loss = alpha * (1-BCE_EXP)**gamma * BCE
+
+        return focal_loss
+
 def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, model_path):
 
     # model 
@@ -114,7 +137,7 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
     model.device = device
 
     model = nn.DataParallel(model, device_ids=gpus, output_device=gpus[0])
-    criterion = DiceBCELoss()
+    criterion = DiceLoss()
 
     # Initialize optimizer.
     optimizer = torch.optim.AdamW(model.parameters(), lr = learning_rate, weight_decay=weight_decay)
