@@ -35,10 +35,10 @@ my augmentation
 |  model         |  TPR(sensitivity)  |  PPV(Precision)    | F1 score |
 |  ----          | ----  | ----    |  ---- |
 | Simu-baseline  | 61.60% |  81.50%  |  69.78% |
-| Simu-ResnextUnet   |  62.72%     |   72.98%      |  67.45% |
 | mag_lr_ResnextUnet |  78.07%     |   75.11%      | 76.56%  |
+| dice_ResnextUnet |  82.27%     |   77.19%      | 79.65%  |
 
-precision = 0.75109 sensitivity = 0.78079 f1_score = 0.76565
+loss = 0.49083 precision = 0.77192 sensitivity = 0.82267 f1_score = 0.79648 dice = 0.50916
 
 ## Intra
 |  model         |  TPR(sensitivity)  |  PPV(Precision)    | F1 score |
