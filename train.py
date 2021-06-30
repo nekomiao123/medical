@@ -18,10 +18,10 @@ from evaluation import evaluate
 from utils import get_device
 
 # 使用多GPU保存模型的时候记得加上.module
-gpus = [6, 7]
+gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'intra_DiceLoss_prescse'
+train_name = 'intra_test'
 # hyperparameter
 default_config = dict(
     batch_size=32,
@@ -226,7 +226,6 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
             # 使用了多GPU需要加上module
             torch.save(model.module, model_path)
             print('saving model with best_f1 {:.5f}'.format(best_f1))
-
 
 def main():
     batch_size = config['batch_size']
