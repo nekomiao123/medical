@@ -12,6 +12,8 @@ import cv2
 from utils import im_convert
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
+from sklearn.model_selection import KFold
+
 
 def generate_mask(img_height,img_width,radius,center_x,center_y):
     y,x=np.ogrid[0:img_height,0:img_width]
@@ -86,7 +88,7 @@ def heatmap_generator(file_name, SCALE = 32):
     return img
 
 class Medical_Data(Dataset):
-    def __init__(self, data_path, data_mode, set_mode, valid_ratio = 0.2):
+    def __init__(self, data_path, data_mode, set_mode, valid_ratio = 0.2, index = None):
         '''
         data_path: data path.
         data_mode: simulator or intra data.
@@ -96,6 +98,7 @@ class Medical_Data(Dataset):
         self.data_path = data_path
         self.set_mode = set_mode
         self.transform = None
+
         if data_mode == "simulator":
             self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-9]/*/images/*.png"))
             self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
@@ -105,12 +108,17 @@ class Medical_Data(Dataset):
         self.data_len = len(self.imgs_path)
         self.train_len = int(self.data_len * (1 - valid_ratio))
 
+        # add k-fold
         if set_mode == 'train':
             self.imgs_path = self.imgs_path[:self.train_len]
         elif set_mode == 'valid':
             self.imgs_path = self.imgs_path[self.train_len:]
         elif set_mode == 'test':
             self.imgs_path = self.imgs_path[-1:]
+        elif set_mode == 'kfold':
+            self.imgs_path = np.array(self.imgs_path)
+            self.imgs_path = self.imgs_path[index]
+            self.imgs_path = self.imgs_path.tolist()
 
         print('Finished reading the {}_{} set of medical dataset ({} samples found)'
             .format(data_mode, set_mode, len(self.imgs_path)))
@@ -210,18 +218,29 @@ class GAN_Data(Dataset):
         return self.length_dataset
 
 if __name__ == "__main__":
-    # simulator_dataset = Medical_Data("./Traindata/","simulator","test")
-    # simulator_dataset = Medical_Data("./Traindata/","intra","train")
-    # simulator_dataset = Medical_Data("./Traindata/","intra","valid")
-    # # intra_dataset = Medical_Data("./Traindata/","intra","test")
+    simulator_dataset = Medical_Data("./Traindata/","intra","train",valid_ratio = 0.0)
     # simulator_loader = torch.utils.data.DataLoader(dataset=simulator_dataset,
     #                                            batch_size=1, 
     #                                            shuffle=True)
-    # dataiter = iter(simulator_loader)
-    # images, labels, label_path = dataiter.next()
-    # print(label_path)
-    # print(images.shape)
-    # print(labels.shape)
+    datalen = len(simulator_dataset)
+    kf = KFold(n_splits=5, shuffle=True, random_state=123)
+    data_idx = np.arange(datalen)
+    print(data_idx)
+    kfsplit = kf.split(data_idx)
+
+    for fold, (train_idx, valid_idx) in enumerate(kfsplit):
+        print("fold", fold)
+        train_dataset = Medical_Data("./Traindata/","intra","kfold",valid_ratio = 0.0, index=train_idx)
+        train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=32, shuffle=True)
+        valid_dataset = Medical_Data("./Traindata/","intra","kfold",valid_ratio = 0.0, index=valid_idx)
+        valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=32, shuffle=True)
+
+        dataiter = iter(valid_loader)
+        images, labels, label_path = dataiter.next()
+        print(label_path)
+        print(images.shape)
+        print(labels.shape)
+
     # image = im_convert(images, True)
     # label = im_convert(labels, False)
     # plt.imshow(image)
@@ -230,19 +249,21 @@ if __name__ == "__main__":
     # plt.imshow(label)
     # plt.savefig('./pic/testheatmap.png')
     # plt.show()
-    gan_dataset = GAN_Data("./Traindata/")
-    gan_loader = torch.utils.data.DataLoader(dataset=gan_dataset,
-                                               batch_size=1, 
-                                               shuffle=True)
-    dataiter = iter(gan_loader)
-    simu, intra = dataiter.next()
-    print(simu.shape)
-    print(intra.shape)
-    simu = im_convert(simu, True)
-    intra = im_convert(intra, True)
-    plt.imshow(simu)
-    plt.savefig('./pic/simu.png')
-    plt.show()
-    plt.imshow(intra)
-    plt.savefig('./pic/intra.png')
-    plt.show()
+
+    # GAN
+    # gan_dataset = GAN_Data("./Traindata/")
+    # gan_loader = torch.utils.data.DataLoader(dataset=gan_dataset,
+    #                                            batch_size=1, 
+    #                                            shuffle=True)
+    # dataiter = iter(gan_loader)
+    # simu, intra = dataiter.next()
+    # print(simu.shape)
+    # print(intra.shape)
+    # simu = im_convert(simu, True)
+    # intra = im_convert(intra, True)
+    # plt.imshow(simu)
+    # plt.savefig('./pic/simu.png')
+    # plt.show()
+    # plt.imshow(intra)
+    # plt.savefig('./pic/intra.png')
+    # plt.show()

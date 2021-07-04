@@ -1,6 +1,8 @@
 import math
 import wandb
+import numpy as np
 from tqdm import tqdm
+from sklearn.model_selection import KFold
 
 import torch
 import torch.nn as nn
@@ -21,16 +23,17 @@ from utils import get_device
 gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'intra_test1'
+train_name = 'intra_kfold'
+
 # hyperparameter
 default_config = dict(
     batch_size=32,
-    num_epoch=200,
+    num_epoch=50,
     learning_rate=1e-4,            # learning rate of Adam
     weight_decay=0.01,             # weight decay 
     num_workers=5,
     warm_up_epochs=5,
-    model_path = './model/'+train_name+'.pt'
+    model_path = train_name+'.pt'
 )
 
 wandb.init(project='Medical', entity='nekokiku', config=default_config, name=train_name)
@@ -129,7 +132,7 @@ class FocalLoss(nn.Module):
 
         return focal_loss
 
-def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, model_path):
+def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, model_path, fold=0):
 
     # model 
     model = my_unet(modelname='ResnextUnet')
@@ -224,8 +227,27 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
         if f1_score > best_f1:
             best_f1 = f1_score
             # 使用了多GPU需要加上module
-            torch.save(model.module, model_path)
             print('saving model with best_f1 {:.5f}'.format(best_f1))
+            model_name = './kmodel/'+ "fold" + fold + "_" + model_path
+            torch.save(model.module, model_path)
+
+
+def k_fold_train(batch_size, num_workers, learning_rate, weight_decay, num_epoch, model_path ,data_mode='intra'):
+    dataset = Medical_Data(train_path, data_mode=data_mode, set_mode='train', valid_ratio = 0.0)
+    datalen = len(dataset)
+    kf = KFold(n_splits=5, shuffle=True, random_state=123)
+    data_idx = np.arange(datalen)
+    kfsplit = kf.split(data_idx)
+
+    for fold, (train_idx, valid_idx) in enumerate(kfsplit):
+        print("fold", fold)
+        train_dataset = Medical_Data(train_path, data_mode, set_mode="kfold", valid_ratio = 0.0, index=train_idx)
+        train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle = False)
+
+        valid_dataset = Medical_Data(train_path, data_mode, set_mode="kfold", valid_ratio = 0.0, index=valid_idx)
+        valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=batch_size, shuffle = False)
+
+        train(train_loader, valid_loader, learning_rate, weight_decay, num_epoch, model_path, fold)
 
 def main():
     batch_size = config['batch_size']
@@ -234,11 +256,12 @@ def main():
     weight_decay = config['weight_decay']
     num_epoch = config['num_epoch']
     model_path = config['model_path']
-    train_loader, val_loader = pre_data(batch_size, num_workers)
-    train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, model_path)
+
+    # train_loader, val_loader = pre_data(batch_size, num_workers)
+    # train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, model_path)
+    k_fold_train(batch_size, num_workers, learning_rate, weight_decay, num_epoch, model_path)
 
 if __name__ == "__main__":
     main()
 
 
-    
