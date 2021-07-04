@@ -228,9 +228,8 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
             best_f1 = f1_score
             # 使用了多GPU需要加上module
             print('saving model with best_f1 {:.5f}'.format(best_f1))
-            model_name = './kmodel/'+ "fold" + fold + "_" + model_path
-            torch.save(model.module, model_path)
-
+            model_name = './kmodel/'+ "fold" + str(fold) + "_" + model_path
+            torch.save(model.module, model_name)
 
 def k_fold_train(batch_size, num_workers, learning_rate, weight_decay, num_epoch, model_path ,data_mode='intra'):
     dataset = Medical_Data(train_path, data_mode=data_mode, set_mode='train', valid_ratio = 0.0)
@@ -242,10 +241,10 @@ def k_fold_train(batch_size, num_workers, learning_rate, weight_decay, num_epoch
     for fold, (train_idx, valid_idx) in enumerate(kfsplit):
         print("fold", fold)
         train_dataset = Medical_Data(train_path, data_mode, set_mode="kfold", valid_ratio = 0.0, index=train_idx)
-        train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle = False)
+        train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle = False, num_workers=num_workers)
 
         valid_dataset = Medical_Data(train_path, data_mode, set_mode="kfold", valid_ratio = 0.0, index=valid_idx)
-        valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=batch_size, shuffle = False)
+        valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=batch_size, shuffle = False, num_workers=num_workers)
 
         train(train_loader, valid_loader, learning_rate, weight_decay, num_epoch, model_path, fold)
 
