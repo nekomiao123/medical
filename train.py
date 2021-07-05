@@ -1,4 +1,7 @@
 import os
+# 强制每个进程只能用一个线程，防止死锁的发生
+os.environ["OMP_NUM_THREADS"] = "1" 
+os.environ["MKL_NUM_THREADS"] = "1" 
 import math
 import wandb
 import numpy as np
@@ -19,10 +22,6 @@ from network import UNET
 from utils import check_accuracy
 from evaluation import evaluate
 from utils import get_device
-
-# 强制每个进程只能用一个线程，防止死锁的发生
-os.environ["OMP_NUM_THREADS"] = "1" 
-os.environ["MKL_NUM_THREADS"] = "1" 
 
 # 使用多GPU保存模型的时候记得加上.module
 gpus = [4, 5]
