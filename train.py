@@ -1,3 +1,4 @@
+import os
 import math
 import wandb
 import numpy as np
@@ -19,11 +20,15 @@ from utils import check_accuracy
 from evaluation import evaluate
 from utils import get_device
 
+# 强制每个进程只能用一个线程，防止死锁的发生
+os.environ["OMP_NUM_THREADS"] = "1" 
+os.environ["MKL_NUM_THREADS"] = "1" 
+
 # 使用多GPU保存模型的时候记得加上.module
 gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'intra_5fold'
+train_name = 'new_intra_5fold'
 
 # hyperparameter
 default_config = dict(
@@ -31,8 +36,8 @@ default_config = dict(
     num_epoch=50,
     learning_rate=1e-4,            # learning rate of Adam
     weight_decay=0.01,             # weight decay 
-    num_workers=1,
-    
+    num_workers=4,
+
     warm_up_epochs=5,
     model_path = train_name+'.pt'
 )
@@ -214,8 +219,8 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
         eps = 1e-8
         f1_score = (2 * precision * sensitivity) / (precision + sensitivity + eps)
 
-        # dice = check_accuracy(val_loader, model)
-        dice = 0
+        dice = check_accuracy(val_loader, model)
+
         valid_loss = sum(valid_loss) / len(valid_loss)
         print(f"[ Valid | {epoch + 1:03d}/{num_epoch:03d} ] loss = {valid_loss:.5f} precision = {precision:.5f} sensitivity = {sensitivity:.5f} f1_score = {f1_score:.5f} dice = {dice:.5f}")
 
@@ -232,6 +237,7 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
             print('saving model with best_f1 {:.5f}'.format(best_f1))
             model_name = './kmodel/'+ "fold" + str(fold) + "_" + model_path
             torch.save(model.module, model_name)
+
 
 def k_fold_train(batch_size, num_workers, learning_rate, weight_decay, num_epoch, model_path ,data_mode='intra'):
     dataset = Medical_Data(train_path, data_mode=data_mode, set_mode='train', valid_ratio = 0.0)
