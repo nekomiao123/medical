@@ -14,6 +14,9 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from sklearn.model_selection import KFold
 
+# 防止死锁
+cv2.setNumThreads(0)
+cv2.ocl.setUseOpenCL(False)
 
 def generate_mask(img_height,img_width,radius,center_x,center_y):
     y,x=np.ogrid[0:img_height,0:img_width]
@@ -225,21 +228,23 @@ if __name__ == "__main__":
     datalen = len(simulator_dataset)
     kf = KFold(n_splits=5, shuffle=True, random_state=123)
     data_idx = np.arange(datalen)
-    print(data_idx)
+    # print(data_idx)
     kfsplit = kf.split(data_idx)
 
     for fold, (train_idx, valid_idx) in enumerate(kfsplit):
         print("fold", fold)
+        print(train_idx)
+        print(valid_idx)
         train_dataset = Medical_Data("./Traindata/","intra","kfold",valid_ratio = 0.0, index=train_idx)
-        train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=32, shuffle=True)
+        train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=32, shuffle=False)
         valid_dataset = Medical_Data("./Traindata/","intra","kfold",valid_ratio = 0.0, index=valid_idx)
-        valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=32, shuffle=True)
+        valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=32, shuffle=False)
 
-        dataiter = iter(valid_loader)
-        images, labels, label_path = dataiter.next()
-        print(label_path)
-        print(images.shape)
-        print(labels.shape)
+        # dataiter = iter(valid_loader)
+        # images, labels, label_path = dataiter.next()
+        # print(label_path)
+        # print(images.shape)
+        # print(labels.shape)
 
     # image = im_convert(images, True)
     # label = im_convert(labels, False)
