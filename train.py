@@ -27,7 +27,7 @@ from utils import get_device
 gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'new_intra_5fold'
+train_name = 'fix_intra_5fold'
 
 # hyperparameter
 default_config = dict(
