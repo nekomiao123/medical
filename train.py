@@ -27,7 +27,7 @@ from utils import get_device
 gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'fix_intra_5fold'
+train_name = 'fix_simu_5fold'
 
 # hyperparameter
 default_config = dict(
@@ -238,7 +238,7 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
             torch.save(model.module, model_name)
 
 
-def k_fold_train(batch_size, num_workers, learning_rate, weight_decay, num_epoch, model_path ,data_mode='intra'):
+def k_fold_train(batch_size, num_workers, learning_rate, weight_decay, num_epoch, model_path ,data_mode='simulator'):
     dataset = Medical_Data(train_path, data_mode=data_mode, set_mode='train', valid_ratio = 0.0)
     datalen = len(dataset)
     kf = KFold(n_splits=5, shuffle=True, random_state=123)

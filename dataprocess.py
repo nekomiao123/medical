@@ -221,10 +221,8 @@ class GAN_Data(Dataset):
         return self.length_dataset
 
 if __name__ == "__main__":
-    simulator_dataset = Medical_Data("./Traindata/","intra","train",valid_ratio = 0.0)
-    # simulator_loader = torch.utils.data.DataLoader(dataset=simulator_dataset,
-    #                                            batch_size=1, 
-    #                                            shuffle=True)
+    simulator_dataset = Medical_Data("./Traindata/","simulator","train",valid_ratio = 0.0)
+
     datalen = len(simulator_dataset)
     kf = KFold(n_splits=5, shuffle=True, random_state=123)
     data_idx = np.arange(datalen)
@@ -233,11 +231,11 @@ if __name__ == "__main__":
 
     for fold, (train_idx, valid_idx) in enumerate(kfsplit):
         print("fold", fold)
-        print(train_idx)
-        print(valid_idx)
-        train_dataset = Medical_Data("./Traindata/","intra","kfold",valid_ratio = 0.0, index=train_idx)
+        # print(train_idx)
+        # print(valid_idx)
+        train_dataset = Medical_Data("./Traindata/","simulator","kfold",valid_ratio = 0.0, index=train_idx)
         train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=32, shuffle=False)
-        valid_dataset = Medical_Data("./Traindata/","intra","kfold",valid_ratio = 0.0, index=valid_idx)
+        valid_dataset = Medical_Data("./Traindata/","simulator","kfold",valid_ratio = 0.0, index=valid_idx)
         valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=32, shuffle=False)
 
         # dataiter = iter(valid_loader)
