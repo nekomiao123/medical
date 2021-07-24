@@ -91,7 +91,7 @@ def heatmap_generator(file_name, SCALE = 32):
     return img
 
 class Medical_Data(Dataset):
-    def __init__(self, data_path, data_mode, set_mode, valid_ratio = 0.2, index = None):
+    def __init__(self, data_path, data_mode, set_mode, fold = 1, valid_ratio = 0.2, index = None):
         '''
         data_path: data path.
         data_mode: simulator or intra data.
@@ -102,29 +102,102 @@ class Medical_Data(Dataset):
         self.set_mode = set_mode
         self.transform = None
 
+        # if data_mode == "simulator":
+        #     self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-9]/*/images/*.png"))
+        #     self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
+        # elif data_mode == "intra":
+        #     self.imgs_path = glob.glob(os.path.join(data_path,"aicm1[1-4]/*/images/*.png"))
+
+        # self.data_len = len(self.imgs_path)
+        # self.train_len = int(self.data_len * (1 - valid_ratio))
+
+        # # add k-fold
+        # if set_mode == 'train':
+        #     self.imgs_path = self.imgs_path[:self.train_len]
+        # elif set_mode == 'valid':
+        #     self.imgs_path = self.imgs_path[self.train_len:]
+        # elif set_mode == 'test':
+        #     self.imgs_path = self.imgs_path[-1:]
+        # elif set_mode == 'kfold':
+        #     self.imgs_path = np.array(self.imgs_path)
+        #     self.imgs_path = self.imgs_path[index]
+        #     self.imgs_path = self.imgs_path.tolist()
+
+        # to prevent the data leack, dataset splitting sould be carried out on the level of the surgeries
         if data_mode == "simulator":
-            self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-9]/*/images/*.png"))
-            self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
+            if fold == 1:
+                if set_mode == 'train':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-8]/*/images/*.png"))
+                elif set_mode == 'valid':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm9/*/images/*.png"))
+                    self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
+            elif fold == 2:
+                if set_mode == 'train':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-6]/*/images/*.png"))
+                    self.imgs_path += glob.glob(os.path.join(data_path,"aicm9/*/images/*.png"))
+                    self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
+                elif set_mode == 'valid':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[7-8]/*/images/*.png"))
+            elif fold == 3:
+                if set_mode == 'train':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-4]/*/images/*.png"))
+                    self.imgs_path += glob.glob(os.path.join(data_path,"aicm[7-9]/*/images/*.png"))
+                    self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
+                elif set_mode == 'valid':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[5-6]/*/images/*.png"))
+            elif fold == 4:
+                if set_mode == 'train':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-2]/*/images/*.png"))
+                    self.imgs_path += glob.glob(os.path.join(data_path,"aicm[5-9]/*/images/*.png"))
+                    self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
+                elif set_mode == 'valid':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[3-4]/*/images/*.png"))
+            elif fold == 5:
+                if set_mode == 'train':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[3-9]/*/images/*.png"))
+                    self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
+                elif set_mode == 'valid':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-2]/*/images/*.png"))
+
         elif data_mode == "intra":
-            self.imgs_path = glob.glob(os.path.join(data_path,"aicm1[1-4]/*/images/*.png"))
+            if fold == 1:
+                if set_mode == 'train':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm1[1-3]/*/images/*.png"))
+                elif set_mode == 'valid':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm14/*/images/*.png"))
+            elif fold == 2:
+                if set_mode == 'train':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm1[1-2]/*/images/*.png"))
+                    self.imgs_path += glob.glob(os.path.join(data_path,"aicm14/*/images/*.png"))
+                elif set_mode == 'valid':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm13/*/images/*.png"))
+            elif fold == 3:
+                if set_mode == 'train':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm1[3-4]/*/images/*.png"))
+                    self.imgs_path += glob.glob(os.path.join(data_path,"aicm11/*/images/*.png"))
+                elif set_mode == 'valid':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm12/*/images/*.png"))
+            elif fold == 4:
+                if set_mode == 'train':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm1[2-4]/*/images/*.png"))
+                elif set_mode == 'valid':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm11/*/images/*.png"))
+            elif fold == 5:
+                if set_mode == 'train':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm1[2-4]/*/images/*.png"))
+                elif set_mode == 'valid':
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm11/*/images/*.png"))
 
-        self.data_len = len(self.imgs_path)
-        self.train_len = int(self.data_len * (1 - valid_ratio))
-
-        # add k-fold
-        if set_mode == 'train':
-            self.imgs_path = self.imgs_path[:self.train_len]
-        elif set_mode == 'valid':
-            self.imgs_path = self.imgs_path[self.train_len:]
-        elif set_mode == 'test':
+        elif data_mode == "simulator" and set_mode == 'test':
+            self.imgs_path = glob.glob(os.path.join(data_path,"aicm9/*/images/*.png"))
+            self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
             self.imgs_path = self.imgs_path[-1:]
-        elif set_mode == 'kfold':
-            self.imgs_path = np.array(self.imgs_path)
-            self.imgs_path = self.imgs_path[index]
-            self.imgs_path = self.imgs_path.tolist()
+        elif data_mode == "intra" and set_mode == 'test':
+            self.imgs_path = glob.glob(os.path.join(data_path,"aicm14/*/images/*.png"))
+            self.imgs_path = self.imgs_path[-1:]
 
-        print('Finished reading the {}_{} set of medical dataset ({} samples found)'
-            .format(data_mode, set_mode, len(self.imgs_path)))
+        print('Finished reading the {} fold {}_{} set of medical dataset ({} samples found)'
+            .format(str(fold), data_mode, set_mode, len(self.imgs_path)))
 
     def __getitem__(self, index):
         image_path = self.imgs_path[index]
@@ -221,22 +294,27 @@ class GAN_Data(Dataset):
         return self.length_dataset
 
 if __name__ == "__main__":
-    simulator_dataset = Medical_Data("./Traindata/","simulator","train",valid_ratio = 0.0)
+    for i in range(1,6):
+        print('fold',i)
+        simulator_dataset = Medical_Data("./Traindata/","simulator","train",i)
+        simulator_dataset = Medical_Data("./Traindata/","simulator","valid",i)
+        simulator_dataset = Medical_Data("./Traindata/","intra","train",i)
+        simulator_dataset = Medical_Data("./Traindata/","intra","valid",i)
 
-    datalen = len(simulator_dataset)
-    kf = KFold(n_splits=5, shuffle=True, random_state=123)
-    data_idx = np.arange(datalen)
-    # print(data_idx)
-    kfsplit = kf.split(data_idx)
+    # datalen = len(simulator_dataset)
+    # kf = KFold(n_splits=5, shuffle=True, random_state=123)
+    # data_idx = np.arange(datalen)
+    # # print(data_idx)
+    # kfsplit = kf.split(data_idx)
 
-    for fold, (train_idx, valid_idx) in enumerate(kfsplit):
-        print("fold", fold)
-        # print(train_idx)
-        # print(valid_idx)
-        train_dataset = Medical_Data("./Traindata/","simulator","kfold",valid_ratio = 0.0, index=train_idx)
-        train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=32, shuffle=False)
-        valid_dataset = Medical_Data("./Traindata/","simulator","kfold",valid_ratio = 0.0, index=valid_idx)
-        valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=32, shuffle=False)
+    # for fold, (train_idx, valid_idx) in enumerate(kfsplit):
+    #     print("fold", fold)
+    #     # print(train_idx)
+    #     # print(valid_idx)
+    #     train_dataset = Medical_Data("./Traindata/","simulator","kfold",valid_ratio = 0.0, index=train_idx)
+    #     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=32, shuffle=False)
+    #     valid_dataset = Medical_Data("./Traindata/","simulator","kfold",valid_ratio = 0.0, index=valid_idx)
+    #     valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=32, shuffle=False)
 
         # dataiter = iter(valid_loader)
         # images, labels, label_path = dataiter.next()
