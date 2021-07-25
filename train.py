@@ -27,7 +27,7 @@ from utils import get_device
 gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'new_split_data_simu'
+train_name = 'new_simu_fold2'
 
 # hyperparameter
 default_config = dict(
@@ -48,9 +48,9 @@ train_path = './Traindata/'
 
 device = get_device()
 
-def pre_data(batch_size, num_workers, data_mode='simulator'):
-    train_dataset = Medical_Data(train_path, data_mode=data_mode, set_mode='train')
-    val_dataset = Medical_Data(train_path, data_mode=data_mode, set_mode='valid')
+def pre_data(batch_size, num_workers, data_mode='simulator', fold=2):
+    train_dataset = Medical_Data(train_path, data_mode=data_mode, set_mode='train', fold=fold)
+    val_dataset = Medical_Data(train_path, data_mode=data_mode, set_mode='valid', fold=fold)
     # test_dataset = Medical_Data(test_path, data_mode, set_mode='test')
     train_loader = torch.utils.data.DataLoader(
             dataset=train_dataset,
@@ -237,7 +237,7 @@ def train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, mode
             model_name = './kmodel/'+ "fold" + str(fold) + "_" + model_path
             torch.save(model.module, model_name)
 
-def k_fold_train(batch_size, num_workers, learning_rate, weight_decay, num_epoch, model_path ,data_mode='simulator'):
+def k_fold_train(batch_size, num_workers, learning_rate, weight_decay, num_epoch, model_path ,data_mode='intra'):
     # dataset = Medical_Data(train_path, data_mode=data_mode, set_mode='train', valid_ratio = 0.0)
     # datalen = len(dataset)
     # kf = KFold(n_splits=5, shuffle=True, random_state=123)
@@ -271,9 +271,10 @@ def main():
     weight_decay = config['weight_decay']
     num_epoch = config['num_epoch']
     model_path = config['model_path']
+    fold = 2
 
-    train_loader, val_loader = pre_data(batch_size, num_workers)
-    train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, model_path)
+    train_loader, val_loader = pre_data(batch_size, num_workers, fold=fold)
+    train(train_loader, val_loader, learning_rate, weight_decay, num_epoch, model_path, fold=fold)
     # k_fold_train(batch_size, num_workers, learning_rate, weight_decay, num_epoch, model_path)
 
 if __name__ == "__main__":

@@ -38,8 +38,6 @@ my augmentation
 | mag_lr_ResnextUnet |  78.07%     |   75.11%      | 76.56%  |
 | dice_ResnextUnet |  82.27%     |   77.19%      | 79.65%  |
 
-loss = 0.49083 precision = 0.77192 sensitivity = 0.82267 f1_score = 0.79648 dice = 0.50916
-
 ## Intra
 |  model         |  TPR(sensitivity)  |  PPV(Precision)    | F1 score |
 |  ----          | ----  | ----    | ---- |
@@ -47,4 +45,23 @@ loss = 0.49083 precision = 0.77192 sensitivity = 0.82267 f1_score = 0.79648 dice
 | mag_lr_ResnextUnet  |    50.11%   |     63.43%    | 55.98%   |
 | dice_ResnextUnet  |    55.19%   |     66.45%    | 60.30%   |
 
-precision = 0.66451 sensitivity = 0.55193 f1_score = 0.60301 dice = 0.36288 
+
+## 5-fold Simu
+| Metric           | model    | f1    | f2    | f3    | f4    | f5    | μ±σ        |
+| ---------------- | -------- | ----- | ----- | ----- | ----- | ----- | ---------- |
+| PPV(Precision)   | baseline | -     | -     | -     | -     | -     | 81.50±5.77 |
+| PPV(Precision)   | 5-fold   | 84.37 | 54.79 | 76.84 | 74.18 | 77.55 | 73.55±9.96 |
+| TPR(sensitivity) | baseline | -     | -     | -     | -     | -     | 61.60±6.11 |
+| TPR(sensitivity) | 5-fold   | 79.63 | 72.25 | 68.64 | 80.19 | 77.55 | 75.65±4.49 |
+| F1 score         | baseline | -     | -     | -     | -     | -     | 69.78      |
+| F1 score         | 5-fold   | 81.94 | 62.33 | 72.51 | 77.07 | 77.55 | 74.28±6.68 |
+
+## 5-fold Intra
+| Metric           | model    | f1    | f2    | f3    | f4    | μ±σ        |
+| ---------------- | -------- | ----- | ----- | ----- | ----- | ---------- |
+| PPV(Precision)   | baseline | -     | -     | -     | -     |            |
+| PPV(Precision)   | 5-fold   | 62.24 | 67.35 | 54.92 | 66.54 | 62.76±4.93 |
+| TPR(sensitivity) | baseline | -     | -     | -     | -     |            |
+| TPR(sensitivity) | 5-fold   | 51.81 | 54.44 | 44.22 | 50.45 | 50.23±3.75 |
+| F1 score         | baseline | -     | -     | -     | -     |            |
+| F1 score         | 5-fold   | 56.56 | 60.22 | 48.99 | 57.38 | 55.79±4.15 |
