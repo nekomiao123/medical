@@ -133,11 +133,11 @@ class Medical_Data(Dataset):
                     self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
             elif fold == 2:
                 if set_mode == 'train':
-                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-7]/*/images/*.png"))
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-6]/*/images/*.png"))
                     self.imgs_path += glob.glob(os.path.join(data_path,"aicm9/*/images/*.png"))
                     self.imgs_path += glob.glob(os.path.join(data_path,"aicm10/*/images/*.png"))
                 elif set_mode == 'valid':
-                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[8]/*/images/*.png"))
+                    self.imgs_path = glob.glob(os.path.join(data_path,"aicm[7-8]/*/images/*.png"))
             elif fold == 3:
                 if set_mode == 'train':
                     self.imgs_path = glob.glob(os.path.join(data_path,"aicm[1-4]/*/images/*.png"))

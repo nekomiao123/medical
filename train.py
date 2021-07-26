@@ -27,7 +27,7 @@ from utils import get_device
 gpus = [4, 5]
 torch.cuda.set_device('cuda:{}'.format(gpus[0]))
 
-train_name = 'new_simu_fold2'
+train_name = 'nnew_simu_fold2'
 
 # hyperparameter
 default_config = dict(

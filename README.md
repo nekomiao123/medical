@@ -59,9 +59,10 @@ my augmentation
 ## 5-fold Intra
 | Metric           | model    | f1    | f2    | f3    | f4    | μ±σ        |
 | ---------------- | -------- | ----- | ----- | ----- | ----- | ---------- |
-| PPV(Precision)   | baseline | -     | -     | -     | -     |            |
+| PPV(Precision)   | baseline | -     | -     | -     | -     | 66.68±4.67 |
 | PPV(Precision)   | 5-fold   | 62.24 | 67.35 | 54.92 | 66.54 | 62.76±4.93 |
-| TPR(sensitivity) | baseline | -     | -     | -     | -     |            |
+| TPR(sensitivity) | baseline | -     | -     | -     | -     | 24.45±5.06 |
 | TPR(sensitivity) | 5-fold   | 51.81 | 54.44 | 44.22 | 50.45 | 50.23±3.75 |
-| F1 score         | baseline | -     | -     | -     | -     |            |
+| F1 score         | baseline | -     | -     | -     | -     | 35.78%     |
 | F1 score         | 5-fold   | 56.56 | 60.22 | 48.99 | 57.38 | 55.79±4.15 |
+
