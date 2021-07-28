@@ -133,7 +133,6 @@ def check_out(image_out,points_big,bboxs_big):
             #         image_out[i,x] = False
     return image_out
 
-
 def OSTU_test(predict):
     radius = 2
     selem = disk(radius)
@@ -210,7 +209,6 @@ def OSTU_test(predict):
     else:
         return points
 
-
 def predict(model_path, test_loader):
 
     model = torch.load(model_path)
@@ -266,7 +264,7 @@ def main():
             shuffle=False
         )
 
-    predict(model_path, test_loader)
+    # predict(model_path, test_loader)
     # print("Done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
 if __name__ == "__main__":
